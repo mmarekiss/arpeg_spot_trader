@@ -8,8 +8,8 @@ services:
                         logging: "promtail"
                         logging_jobname: "GW bridge"
                 ports: 
-                        - "5001:80"
-                        - "1234:1234"
+                        - "5001:5001"
+                        - "12345:12345"
                 restart: always
                 volumes:
                         - /dev:/dev
