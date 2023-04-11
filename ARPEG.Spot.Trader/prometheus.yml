@@ -1,0 +1,20 @@
+global:
+  scrape_interval: 30s
+  scrape_timeout: 10s
+
+rule_files:
+
+scrape_configs:
+  - job_name: services
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['localhost:9090']
+  - job_name: 'zdar'
+    static_configs:
+      - targets: ['web:1234']
+
+remote_write:
+  - url: https://prometheus-prod-24-prod-eu-west-2.grafana.net/api/prom/push
+    basic_auth:
+      username: 938239
+      password: glc_eyJvIjoiODM0MTYwIiwibiI6ImFycGVnIiwiayI6IjIyUVE5VlhUSjIzZGJDaTR6MWE3UjkxcSIsIm0iOnsiciI6InByb2QtZXUtd2VzdC0yIn19

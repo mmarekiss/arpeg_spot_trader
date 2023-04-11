@@ -1,0 +1,39 @@
+version: '3'
+services: 
+        trader:
+                build: .
+                privileged: true
+                network_mode: "host"
+                labels:
+                        logging: "promtail"
+                        logging_jobname: "GW bridge"
+                ports: 
+                        - "5001:80"
+                        - "1234:1234"
+                restart: always
+                volumes:
+                        - /dev:/dev
+        prometheus:
+                image: prom/prometheus
+                container_name: prometheus
+                network_mode: "host"
+                command:
+                        - '--config.file=/etc/prometheus/prometheus.yml'
+                volumes:
+                        - ./prometheus.yml:/etc/prometheus/prometheus.yml        
+                ports:
+                        - 9090:9090
+                restart: unless-stopped
+        promtail:
+                image:  grafana/promtail:latest
+                network_mode: "host"
+                container_name: promtail
+                ports:
+                        - 9080:9080
+                volumes:
+                        - ./promtailconfig.yml:/etc/promtail/docker-config.yaml
+                        - /var/lib/docker/containers:/var/lib/docker/containers
+                        - /var/run/docker.sock:/var/run/docker.sock
+                command: -config.file=/etc/promtail/docker-config.yaml 
+               
+

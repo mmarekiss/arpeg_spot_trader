@@ -1,0 +1,26 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+        
+positions:
+  filename: /tmp/positions.yaml
+        
+client:
+  url: https://468088:glc_eyJvIjoiODM0MTYwIiwibiI6ImFycGVnIiwiayI6IjIyUVE5VlhUSjIzZGJDaTR6MWE3UjkxcSIsIm0iOnsiciI6InByb2QtZXUtd2VzdC0yIn19@logs-prod-012.grafana.net/api/prom/push
+        
+scrape_configs:
+  - job_name: flog_scrape
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 5s
+        filters:
+          - name: label
+            values: ["logging=promtail"]
+    relabel_configs:
+      - source_labels: ['__meta_docker_container_name']
+        regex: '/(.*)'
+        target_label: 'container'
+      - source_labels: ['__meta_docker_container_log_stream']
+        target_label: 'logstream'
+      - source_labels: ['__meta_docker_container_label_logging_jobname']
+        target_label: 'job'
