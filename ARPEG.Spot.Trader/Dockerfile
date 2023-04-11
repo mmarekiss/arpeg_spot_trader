@@ -10,5 +10,6 @@ RUN dotnet publish -c release -o /app
 FROM mcr.microsoft.com/dotnet/aspnet:7.0
 WORKDIR /app
 COPY --from=build /app ./
+ENV ASPNETCORE_URLS=http://+:5000
 ENV ASPNET_ENVIRONMENT=Production
 ENTRYPOINT ["dotnet", "ARPEG.Spot.Trader.dll"]
