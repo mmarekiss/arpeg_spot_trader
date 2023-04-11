@@ -21,38 +21,31 @@ public class GoodWeFinder
     {
         var result = new List<(string SN, IPAddress address)>();
         var findTasks = new List<Task>();
-        while (!result.Any())
+        foreach (var iface in ips)
         {
-            foreach (var iface in ips)
-            {
-                foreach (var chunk in GetIps(iface).Chunk(20))
-                    findTasks.Add(Task.Run(async () =>
+            foreach (var chunk in GetIps(iface).Chunk(20))
+                findTasks.Add(Task.Run(async () =>
+                {
+                    foreach (var ip in chunk)
                     {
-                        foreach (var ip in chunk)
+                        _goodWe.InitHostname(ip);
+                        try
                         {
-                            _goodWe.InitHostname(ip);
-                            try
-                            {
-                                var sn = await _goodWe.GetInverterName();
-                                if (!string.IsNullOrWhiteSpace(sn))
-                                    lock (result)
-                                    {
-                                        result.Add((sn, ip));
-                                    }
-                            }
-                            catch
-                            {
-                                _logger.LogInformation($"{ip} is not GoodWe");
-                            }
+                            var sn = await _goodWe.GetInverterName();
+                            if (!string.IsNullOrWhiteSpace(sn))
+                                lock (result)
+                                {
+                                    result.Add((sn, ip));
+                                }
                         }
-                    }));
-                await Task.WhenAll(findTasks.ToArray());
-            }
-
-            foreach (var r in result)
-            {
-                yield return r;
-            }
+                        catch
+                        {
+                            _logger.LogInformation($"{ip} is not GoodWe");
+                        }
+                    }
+                }));
+            await Task.WhenAll(findTasks.ToArray());
+            foreach (var r in result) yield return r;
             result.Clear();
         }
     }

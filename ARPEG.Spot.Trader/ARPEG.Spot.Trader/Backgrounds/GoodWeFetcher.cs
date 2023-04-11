@@ -25,7 +25,8 @@ public class GoodWeFetcher : BackgroundService
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         var tasks = new List<Task>();
-        await foreach (var goodWee in _finder.FindGoodWees(IpFetcher.GetAddressess(_logger).ToArray())
+        var addressess = IpFetcher.GetAddressess(_logger).ToArray();
+        await foreach (var goodWee in _finder.FindGoodWees(addressess)
                            .WithCancellation(stoppingToken))
         {
             tasks.Add(RunTraded(goodWee.SN, goodWee.address, stoppingToken));
