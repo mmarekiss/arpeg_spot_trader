@@ -18,7 +18,7 @@ namespace ARPEG.Spot.Trader
             
             services.AddMetricServer(options =>
             {
-                options.Port = 1234;
+                options.Port = 12345;
             });
 
         }

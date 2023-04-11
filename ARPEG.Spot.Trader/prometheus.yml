@@ -8,10 +8,10 @@ scrape_configs:
   - job_name: services
     metrics_path: /metrics
     static_configs:
-      - targets: ['localhost:9090']
+      - targets: ['localhost:9091']
   - job_name: 'zdar'
     static_configs:
-      - targets: ['web:1234']
+      - targets: ['web:12345']
 
 remote_write:
   - url: https://prometheus-prod-24-prod-eu-west-2.grafana.net/api/prom/push
