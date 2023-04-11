@@ -7,9 +7,6 @@ services:
                 labels:
                         logging: "promtail"
                         logging_jobname: "GW bridge"
-                ports: 
-                        - "5001:5001"
-                        - "12345:12345"
                 restart: always
                 volumes:
                         - /dev:/dev
@@ -20,16 +17,12 @@ services:
                 command:
                         - '--config.file=/etc/prometheus/prometheus.yml'
                 volumes:
-                        - ./prometheus.yml:/etc/prometheus/prometheus.yml        
-                ports:
-                        - 9090:9090
+                        - ./prometheus.yml:/etc/prometheus/prometheus.yml                        
                 restart: unless-stopped
         promtail:
                 image:  grafana/promtail:latest
                 network_mode: "host"
                 container_name: promtail_trader
-                ports:
-                        - 9080:9080
                 volumes:
                         - ./promtailconfig.yml:/etc/promtail/docker-config.yaml
                         - /var/lib/docker/containers:/var/lib/docker/containers
