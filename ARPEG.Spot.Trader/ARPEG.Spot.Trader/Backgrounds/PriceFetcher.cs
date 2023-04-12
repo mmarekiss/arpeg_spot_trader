@@ -76,6 +76,10 @@ public class PriceFetcher : BackgroundService
             {
                 await InvokeMethod(g => g.DisableExportLimit(stoppingToken));
             }
+            else 
+            {
+                await InvokeMethod(g => g.SetExportLimit(eLimit, stoppingToken));
+            }
 
             if (price < -10 && pvForecast < 10 && pvMaxForecast < 50)
                 await InvokeMethod(g => g.ForceBatteryCharge(stoppingToken));
