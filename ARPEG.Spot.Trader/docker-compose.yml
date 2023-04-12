@@ -4,6 +4,8 @@ services:
                 build: .
                 privileged: true
                 network_mode: "host"
+                environment:
+                        - GWAddress=192.168.55.104
                 labels:
                         logging: "promtail"
                         logging_jobname: "GW bridge"
