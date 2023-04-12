@@ -1,4 +1,6 @@
 ﻿using ARPEG.Spot.Trader.Backgrounds;
+using ARPEG.Spot.Trader.Services;
+using ARPEG.Spot.Trader.Store;
 using ARPEG.Spot.Trader.Utils;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,8 +15,12 @@ namespace ARPEG.Spot.Trader
         {
             services.AddTransient<GoodWeFinder>();
             services.AddTransient<GoodWeCom>();
+            services.AddSingleton<PriceService>();
+            services.AddSingleton<ForecastService>();
+            services.AddSingleton<GoodWeInvStore>();
 
             services.AddHostedService<GoodWeFetcher>();
+            services.AddHostedService<PriceFetcher>();
             
             services.AddMetricServer(options =>
             {

@@ -1,4 +1,5 @@
 ﻿using System.Net;
+using ARPEG.Spot.Trader.Store;
 using ARPEG.Spot.Trader.Utils;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
@@ -10,14 +11,17 @@ namespace ARPEG.Spot.Trader.Backgrounds;
 public class GoodWeFetcher : BackgroundService
 {
     private readonly GoodWeFinder _finder;
+    private readonly GoodWeInvStore _invStore;
     private readonly ILogger<GoodWeFetcher> _logger;
     private readonly IServiceProvider _serviceProvider;
 
     public GoodWeFetcher(GoodWeFinder finder,
+        GoodWeInvStore invStore,
         ILogger<GoodWeFetcher> logger,
         IServiceProvider serviceProvider)
     {
         _finder = finder;
+        _invStore = invStore;
         _logger = logger;
         _serviceProvider = serviceProvider;
     }
@@ -25,7 +29,10 @@ public class GoodWeFetcher : BackgroundService
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         var tasks = new List<Task>();
-        var addressess = IpFetcher.GetAddressess(_logger).ToArray();
+        var addressess = IPAddress.TryParse(Environment.GetEnvironmentVariable("GWAddress"), out var ipAddress) 
+            ? new [] { (ipAddress, IPAddress.Parse("255.255.255.255"))}  
+            : IpFetcher.GetAddressess(_logger).ToArray();
+        
         await foreach (var goodWee in _finder.FindGoodWees(addressess)
                            .WithCancellation(stoppingToken))
         {
@@ -43,6 +50,7 @@ public class GoodWeFetcher : BackgroundService
                            throw new ApplicationException("please define goodWe comm");
         communicator.InitHostname(address);
         communicator.InitInverterName(name);
+        _invStore.AddGoodWe(communicator);
         while (!cancellationToken.IsCancellationRequested)
         {
             await communicator.GetHomeConsumption();

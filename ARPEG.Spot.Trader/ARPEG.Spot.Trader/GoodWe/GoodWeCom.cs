@@ -80,6 +80,21 @@ public class GoodWeCom
         return null;
     }
 
+    public async Task SetExportLimit(UInt16 limit, CancellationToken cancellationToken)
+    {
+        await SetUint16Value(47510, limit, cancellationToken);
+    }
+    
+    public async Task ForceBatteryCharge(CancellationToken cancellationToken)
+    {
+        await SetUint16Value(47517, 100, cancellationToken);
+    }
+    
+    public async Task StopForceBatteryCharge(CancellationToken cancellationToken)
+    {
+        await SetUint16Value(47517, 0, cancellationToken);
+    }
+
     public async Task GetHomeConsumption()
     {
         _logger.LogInformation("=============================");
@@ -177,6 +192,20 @@ public class GoodWeCom
                 }));
 
         gauge?.WithLabels(part, Name).Set(value);
+    }
+
+    private async Task SetUint16Value(UInt16 address,
+        UInt16 value, CancellationToken cancellationToken)
+    {
+        var arr = new byte[]
+            { 0xF7, 0x06, (byte)(address >> 8), (byte)address, (byte)(value >> 8), (byte)value };
+
+        var crc = ModbusCreator.CalculateCrc(arr, arr.Length);
+
+        arr = arr.Concat(BitConverter.GetBytes(crc)).ToArray();
+
+        using var client = GetClient();
+        await client.SendAsync(arr, cancellationToken);
     }
 
     private async IAsyncEnumerable<DataValue> GetInt16Values(params DataPoint[] points)

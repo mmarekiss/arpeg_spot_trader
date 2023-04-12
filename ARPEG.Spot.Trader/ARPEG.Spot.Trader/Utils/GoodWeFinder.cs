@@ -17,7 +17,7 @@ public class GoodWeFinder
         _logger = logger;
     }
 
-    public async IAsyncEnumerable<(string SN, IPAddress address)> FindGoodWees(params UnicastIPAddressInformation[] ips)
+    public async IAsyncEnumerable<(string SN, IPAddress address)> FindGoodWees(params (IPAddress address, IPAddress mask)[] ips)
     {
         var result = new List<(string SN, IPAddress address)>();
         var findTasks = new List<Task>();
@@ -50,10 +50,10 @@ public class GoodWeFinder
         }
     }
 
-    private IEnumerable<IPAddress> GetIps(UnicastIPAddressInformation iface)
+    private IEnumerable<IPAddress> GetIps((IPAddress address, IPAddress mask) iface)
     {
-        var ip = iface.Address.GetAddressBytes();
-        var mask = iface.IPv4Mask.GetAddressBytes();
+        var ip = iface.address.GetAddressBytes();
+        var mask = iface.mask.GetAddressBytes();
 
         var baseIp = new[] { ip[0] & mask[0], ip[1] & mask[1], ip[2] & mask[2], ip[3] & mask[3] };
 
