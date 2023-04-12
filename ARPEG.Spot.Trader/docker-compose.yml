@@ -3,9 +3,11 @@ services:
         trader:
                 build: .
                 privileged: true
-                network_mode: "host"
+                # network_mode: "host"
                 environment:
                         - GWAddress=192.168.55.104
+                ports:
+                        - 12345:12345
                 labels:
                         logging: "promtail"
                         logging_jobname: "GW bridge"
@@ -15,7 +17,9 @@ services:
         prometheus:
                 image: prom/prometheus
                 container_name: prometheus_trader
-                network_mode: "host"
+                # network_mode: "host"
+                ports:
+                        - 9090:9090
                 command:
                         - '--config.file=/etc/prometheus/prometheus.yml'
                 volumes:
@@ -23,7 +27,7 @@ services:
                 restart: unless-stopped
         promtail:
                 image:  grafana/promtail:latest
-                network_mode: "host"
+                # network_mode: "host"
                 container_name: promtail_trader
                 volumes:
                         - ./promtailconfig.yml:/etc/promtail/docker-config.yaml

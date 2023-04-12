@@ -82,20 +82,29 @@ public class GoodWeCom
 
     public async Task SetExportLimit(UInt16 limit, CancellationToken cancellationToken)
     {
+        await SetUint16Value(47509, 1, cancellationToken);
         await SetUint16Value(47510, limit, cancellationToken);
+    }
+    
+    public async Task DisableExportLimit( CancellationToken cancellationToken)
+    {
+        await SetUint16Value(47509, 0, cancellationToken);
+        await SetUint16Value(47510, 10000, cancellationToken);
     }
     
     public async Task ForceBatteryCharge(CancellationToken cancellationToken)
     {
-        await SetUint16Value(47517, 100, cancellationToken);
+        await SetUint16Value(47512, 5000, cancellationToken);
+        await SetUint16Value(47511, 2, cancellationToken);
     }
     
     public async Task StopForceBatteryCharge(CancellationToken cancellationToken)
     {
-        await SetUint16Value(47517, 0, cancellationToken);
+        await SetUint16Value(47512, 0, cancellationToken);
+        await SetUint16Value(47511, 1, cancellationToken);
     }
 
-    public async Task GetHomeConsumption()
+    public async Task GetHomeConsumption(CancellationToken cancellationToken)
     {
         _logger.LogInformation("=============================");
         await GetInt16Values(
@@ -103,21 +112,34 @@ public class GoodWeCom
             new DataPoint("Grid", "L2", 36022),
             new DataPoint("Grid", "L3", 36024),
             new DataPoint("Grid", "Total", 36026)
-        ).ToListAsync();
+        ).ToListAsync(cancellationToken: cancellationToken);
+        
+        await GetInt16Values(
+            new DataPoint("Grid", "L1", 36020),
+            new DataPoint("Grid", "L2", 36022),
+            new DataPoint("Grid", "L3", 36024),
+            new DataPoint("Grid", "Total", 36026)
+        ).ToListAsync(cancellationToken: cancellationToken);
 
         await GetInt16Values(
+            new DataPoint("Export", "Enabled", 47509),
             new DataPoint("Export", "Limit", 47510),
             new DataPoint("Battery", "GridCharge FROM ", 47515),
             new DataPoint("Battery", "GridCharge TO", 47516),
             new DataPoint("Battery", "GridCharge", 47517)
-        ).ToListAsync();
+        ).ToListAsync(cancellationToken: cancellationToken);
 
         await GetInt16Values(
             new DataPoint("Battery", "V", 35180),
             new DataPoint("Battery", "I", 35181),
             new DataPoint("Battery", "W", 35183),
             new DataPoint("Battery", "Mode", 35184)
-        ).ToListAsync();
+        ).ToListAsync(cancellationToken: cancellationToken);
+
+        await GetInt16Values(
+            new DataPoint("Battery", "MinSOC", 45356)
+        ).ToListAsync(cancellationToken: cancellationToken);
+        
 
         await GetInt16Values(
             new DataPoint("Battery", "BMS", 37002),
@@ -126,8 +148,8 @@ public class GoodWeCom
             new DataPoint("Battery", "DischargeImax", 37005),
             new DataPoint("Battery", "bmErrCode", 37006),
             new DataPoint("Battery", "SOC", 37007),
-            new DataPoint("Battery", "cmsSOH", 37008)
-        ).ToListAsync();
+            new DataPoint("Battery", "bmsSOH", 37008)
+        ).ToListAsync(cancellationToken: cancellationToken);
 
 
         await GetInt16Values(
@@ -147,21 +169,21 @@ public class GoodWeCom
             new DataPoint("Backup Mode", "L3", 35160),
             new DataPoint("Backup Watt", "L3", 35162),
             new DataPoint("Backup Watt", "Total", 35170)
-        ).ToListAsync();
+        ).ToListAsync(cancellationToken: cancellationToken);
 
         await GetInt16Values(
             new DataPoint("Feed", "L1", 35125),
             new DataPoint("Feed", "L2", 35130),
             new DataPoint("Feed", "L3", 35135),
             new DataPoint("Feed", "Total", 35138)
-        ).ToListAsync();
+        ).ToListAsync(cancellationToken: cancellationToken);
 
         await GetInt16Values(
             new DataPoint("Consumption", "L1", 35164),
             new DataPoint("Consumption", "L2", 35166),
             new DataPoint("Consumption", "L3", 35168),
             new DataPoint("Consumption", "Total", 35172)
-        ).ToListAsync();
+        ).ToListAsync(cancellationToken: cancellationToken);
 
         await GetInt16Values(
             new DataPoint("PV", "PV1_Voltage", 35103),
@@ -170,13 +192,13 @@ public class GoodWeCom
             new DataPoint("PV", "PV2_Voltage", 35107),
             new DataPoint("PV", "PV2_Current", 35108),
             new DataPoint("PV", "PV2_Wats", 35110)
-        ).ToListAsync();
+        ).ToListAsync(cancellationToken: cancellationToken);
 
         await GetInt16Values(
             new DataPoint("Temperature", "Temperature_Air", 35174),
             new DataPoint("Temperature", "Temperature_Radiator", 35176),
             new DataPoint("Temperature", "Temperature_Module", 35175)
-        ).ToListAsync();
+        ).ToListAsync(cancellationToken: cancellationToken);
     }
 
     private void TraceGauge(string group,

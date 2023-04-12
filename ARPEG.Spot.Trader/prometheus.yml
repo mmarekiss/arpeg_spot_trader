@@ -9,9 +9,9 @@ scrape_configs:
     metrics_path: /metrics
     static_configs:
       - targets: ['localhost:9091']
-  - job_name: 'zdar'
+  - job_name: 'trader'
     static_configs:
-      - targets: ['web:12345']
+      - targets: ['trader:12345']
 
 remote_write:
   - url: https://prometheus-prod-24-prod-eu-west-2.grafana.net/api/prom/push

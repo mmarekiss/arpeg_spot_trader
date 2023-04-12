@@ -60,15 +60,22 @@ public class PriceFetcher : BackgroundService
 
         if (bool.TryParse(Environment.GetEnvironmentVariable("ARPEG_TradeEnergy"), out var tradeEnergy) && tradeEnergy)
         {
-            ushort exportLimit =
-                ushort.TryParse(Environment.GetEnvironmentVariable("ARPEG_ExportLimit"), out var eLimit)
+            var exportLimitSet =
+                ushort.TryParse(Environment.GetEnvironmentVariable("ARPEG_ExportLimit"), out var eLimit);
+            var exportLimit =
+                exportLimitSet
                     ? eLimit
                     : (ushort)10_000;
 
             if (price < 10)
+            {
                 exportLimit = Math.Min(exportLimit, (ushort)200);
-
-            await InvokeMethod(g => g.SetExportLimit(exportLimit, stoppingToken));
+                await InvokeMethod(g => g.SetExportLimit(exportLimit, stoppingToken));
+            }
+            else if (!exportLimitSet)
+            {
+                await InvokeMethod(g => g.DisableExportLimit(stoppingToken));
+            }
 
             if (price < -10 && pvForecast < 10 && pvMaxForecast < 50)
                 await InvokeMethod(g => g.ForceBatteryCharge(stoppingToken));

@@ -53,7 +53,7 @@ public class GoodWeFetcher : BackgroundService
         _invStore.AddGoodWe(communicator);
         while (!cancellationToken.IsCancellationRequested)
         {
-            await communicator.GetHomeConsumption();
+            await communicator.GetHomeConsumption(cancellationToken);
         }
     }
 }
