@@ -1,11 +1,20 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
+using System.Globalization;
 using ARPEG.Spot.Trader;
+using ARPEG.Spot.Trader.Constants;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+
+CultureInfo.CurrentCulture = new CultureInfo("cs");
+CultureInfo.CurrentUICulture = new CultureInfo("cs");
 
 var builder = WebApplication
     .CreateBuilder(args);
+
+builder.Configuration
+    .AddJsonFile(AppSettings.UserAppSettingsFile, optional:true, reloadOnChange: true);
 
 builder.Logging.AddConfiguration(builder.Configuration);
 

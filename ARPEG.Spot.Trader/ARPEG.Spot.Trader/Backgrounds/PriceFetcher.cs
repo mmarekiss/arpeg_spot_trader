@@ -1,7 +1,9 @@
-﻿using ARPEG.Spot.Trader.Services;
+﻿using ARPEG.Spot.Trader.Config;
+using ARPEG.Spot.Trader.Services;
 using ARPEG.Spot.Trader.Store;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Prometheus;
 using TecoBridge.GoodWe;
 
@@ -10,6 +12,7 @@ namespace ARPEG.Spot.Trader.Backgrounds;
 public class PriceFetcher : BackgroundService
 {
     private readonly ForecastService _forecastService;
+    private readonly IOptionsMonitor<Grid> _gridOptions;
     private readonly Gauge _gauge;
     private readonly Gauge _gaugePvForecast;
     private readonly GoodWeInvStore _invStore;
@@ -18,11 +21,13 @@ public class PriceFetcher : BackgroundService
 
     public PriceFetcher(PriceService priceService,
         ForecastService forecastService,
+        IOptionsMonitor<Grid> gridOptions,
         GoodWeInvStore invStore,
         ILogger<PriceFetcher> logger)
     {
         _priceService = priceService;
         _forecastService = forecastService;
+        _gridOptions = gridOptions;
         _invStore = invStore;
         _logger = logger;
 
@@ -58,27 +63,23 @@ public class PriceFetcher : BackgroundService
         _gauge.Set(price);
         _gaugePvForecast.Set(pvForecast);
 
-        if (bool.TryParse(Environment.GetEnvironmentVariable("ARPEG_TradeEnergy"), out var tradeEnergy) && tradeEnergy)
+        if (_gridOptions.CurrentValue.TradeEnergy)
         {
-            var exportLimitSet =
-                ushort.TryParse(Environment.GetEnvironmentVariable("ARPEG_ExportLimit"), out var eLimit);
-            var exportLimit =
-                exportLimitSet
-                    ? eLimit
-                    : (ushort)10_000;
+            var exportLimitDef = _gridOptions.CurrentValue.ExportLimit;
+            var exportLimit = exportLimitDef ?? (ushort)10_000;
 
             if (price < 10)
             {
                 exportLimit = Math.Min(exportLimit, (ushort)200);
                 await InvokeMethod(g => g.SetExportLimit(exportLimit, stoppingToken));
             }
-            else if (!exportLimitSet)
+            else if (exportLimitDef.HasValue)
             {
-                await InvokeMethod(g => g.DisableExportLimit(stoppingToken));
+                await InvokeMethod(g => g.SetExportLimit(exportLimit, stoppingToken));
             }
             else 
             {
-                await InvokeMethod(g => g.SetExportLimit(eLimit, stoppingToken));
+                await InvokeMethod(g => g.DisableExportLimit(stoppingToken));
             }
 
             if (price < -10 && pvForecast < 10 && pvMaxForecast < 50)

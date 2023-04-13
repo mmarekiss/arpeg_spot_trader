@@ -1,17 +1,26 @@
 ﻿using System.Globalization;
+using Microsoft.Extensions.Logging;
 
 namespace ARPEG.Spot.Trader.Services;
 
 public class ForecastService
 {
+    private readonly ILogger<ForecastService> _logger;
+
     private readonly int[] _forecastForToday = new int[24];
     private readonly int[] _forecastForTommorow = new int[24];
 
     private DateTime ForecastDay = DateTime.MinValue;
 
+    public ForecastService(ILogger<ForecastService> logger)
+    {
+        _logger = logger;
+    }
+
     public int GetCurrentForecast()
     {
-        return _forecastForToday[DateTime.UtcNow.Hour];
+        _logger.LogInformation("Current date time is {dt}", DateTime.Now);
+        return _forecastForToday[DateTime.Now.Hour];
     }
     
     public int GetMaxForecast()

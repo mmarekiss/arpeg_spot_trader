@@ -115,25 +115,18 @@ public class GoodWeCom
         ).ToListAsync(cancellationToken: cancellationToken);
         
         await GetInt16Values(
-            new DataPoint("Grid", "L1", 36020),
-            new DataPoint("Grid", "L2", 36022),
-            new DataPoint("Grid", "L3", 36024),
-            new DataPoint("Grid", "Total", 36026)
-        ).ToListAsync(cancellationToken: cancellationToken);
-
-        await GetInt16Values(
-            new DataPoint("Export", "Enabled", 47509),
-            new DataPoint("Export", "Limit", 47510),
+            new DataPoint("Export", "Enabled", 47509, Min: 0, Max: 1),
+            new DataPoint("Export", "Limit", 47510, Min: 0),
             new DataPoint("Battery", "GridCharge FROM ", 47515),
             new DataPoint("Battery", "GridCharge TO", 47516),
             new DataPoint("Battery", "GridCharge", 47517)
         ).ToListAsync(cancellationToken: cancellationToken);
 
         await GetInt16Values(
-            new DataPoint("Battery", "V", 35180),
+            new DataPoint("Battery", "V", 35180, Min: 0),
             new DataPoint("Battery", "I", 35181),
             new DataPoint("Battery", "W", 35183),
-            new DataPoint("Battery", "Mode", 35184)
+            new DataPoint("Battery", "Mode", 35184, 0, 4)
         ).ToListAsync(cancellationToken: cancellationToken);
 
         await GetInt16Values(
@@ -172,32 +165,32 @@ public class GoodWeCom
         ).ToListAsync(cancellationToken: cancellationToken);
 
         await GetInt16Values(
-            new DataPoint("Feed", "L1", 35125),
-            new DataPoint("Feed", "L2", 35130),
-            new DataPoint("Feed", "L3", 35135),
-            new DataPoint("Feed", "Total", 35138)
+            new DataPoint("Feed", "L1", 35125, Min: -10),
+            new DataPoint("Feed", "L2", 35130, Min: -10),
+            new DataPoint("Feed", "L3", 35135, Min: -10),
+            new DataPoint("Feed", "Total", 35138, Min: -10)
         ).ToListAsync(cancellationToken: cancellationToken);
 
         await GetInt16Values(
-            new DataPoint("Consumption", "L1", 35164),
-            new DataPoint("Consumption", "L2", 35166),
-            new DataPoint("Consumption", "L3", 35168),
-            new DataPoint("Consumption", "Total", 35172)
+            new DataPoint("Consumption", "L1", 35164, Min: 0),
+            new DataPoint("Consumption", "L2", 35166, Min: 0),
+            new DataPoint("Consumption", "L3", 35168, Min: 0),
+            new DataPoint("Consumption", "Total", 35172, Min: 0)
         ).ToListAsync(cancellationToken: cancellationToken);
 
         await GetInt16Values(
-            new DataPoint("PV", "PV1_Voltage", 35103),
-            new DataPoint("PV", "PV1_Current", 35104),
-            new DataPoint("PV", "PV1_Wats", 35106),
-            new DataPoint("PV", "PV2_Voltage", 35107),
-            new DataPoint("PV", "PV2_Current", 35108),
-            new DataPoint("PV", "PV2_Wats", 35110)
+            new DataPoint("PV", "PV1_Voltage", 35103, Min: 0),
+            new DataPoint("PV", "PV1_Current", 35104, Min: 0),
+            new DataPoint("PV", "PV1_Wats", 35106, Min: 0),
+            new DataPoint("PV", "PV2_Voltage", 35107, Min: 0),
+            new DataPoint("PV", "PV2_Current", 35108, Min: 0),
+            new DataPoint("PV", "PV2_Wats", 35110, Min: 0)
         ).ToListAsync(cancellationToken: cancellationToken);
 
         await GetInt16Values(
-            new DataPoint("Temperature", "Temperature_Air", 35174),
-            new DataPoint("Temperature", "Temperature_Radiator", 35176),
-            new DataPoint("Temperature", "Temperature_Module", 35175)
+            new DataPoint("Temperature", "Temperature_Air", 35174, Min: 0),
+            new DataPoint("Temperature", "Temperature_Radiator", 35176, Min: 0),
+            new DataPoint("Temperature", "Temperature_Module", 35175, Min: 0)
         ).ToListAsync(cancellationToken: cancellationToken);
     }
 
@@ -266,7 +259,7 @@ public class GoodWeCom
                     var result = BitConverter.ToInt16(value.Reverse().ToArray());
                     _logger.LogInformation($"{point.Description}: {result}");
                     TraceGauge(point.Group, point.Description, result);
-                    yield return new DataValue(point.Address, point.Description, result);
+                    yield return new DataValue(point.Address, point.Description, FitLimits(result, point));
                 }
                 else
                 {
@@ -275,5 +268,25 @@ public class GoodWeCom
             }
         else
             _logger.LogInformation("Timeout");
+    }
+
+    private short FitLimits(short result,
+        DataPoint point)
+    {
+        if (point.Min.HasValue && result < point.Min.Value)
+            return (short)point.Min.Value;
+        if (point.Max.HasValue && result < point.Max.Value)
+            return (short)point.Max.Value;
+        return result;
+    }
+    
+    private int FitLimits(int result,
+        DataPoint point)
+    {
+        if (point.Min.HasValue && result < point.Min.Value)
+            return point.Min.Value;
+        if (point.Max.HasValue && result < point.Max.Value)
+            return point.Max.Value;
+        return result;
     }
 }

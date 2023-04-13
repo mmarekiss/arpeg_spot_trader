@@ -12,4 +12,5 @@ WORKDIR /app
 COPY --from=build /app ./
 ENV ASPNETCORE_URLS=http://+:9876
 ENV ASPNET_ENVIRONMENT=Production
+ENV TZ=Europe/Prague
 ENTRYPOINT ["dotnet", "ARPEG.Spot.Trader.dll"]

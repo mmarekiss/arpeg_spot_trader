@@ -1,19 +1,31 @@
 ﻿using System.Net.Http.Json;
-using System.Runtime.InteropServices.JavaScript;
 using System.Text.Json;
+using Microsoft.Extensions.Logging;
 
 namespace ARPEG.Spot.Trader.Services;
 
 public class PriceService
 {
+    private readonly ILogger<PriceService> _logger;
 
     private readonly double[] _todayPrices = new double[24];
     private readonly double[] _tommorowPrices = new double[24];
 
-    private DateTime LastFetchedDay { get; set; } = DateTime.MinValue;
+    public PriceService(ILogger<PriceService> logger)
+    {
+        _logger = logger;
+    }
+
+    private DateTime TodayFetched { get; set; } = DateTime.MinValue;
+
+    private DateTime TommorowFetched { get; set; } = DateTime.MinValue;
 
     public double GetCurrentPrice()
-        => _todayPrices[DateTime.UtcNow.Hour];
+    {
+        var hour = DateTime.Now.Hour;
+        _logger.LogInformation("Price for today at hour {i} is {p}", hour, _todayPrices[hour]);
+        return _todayPrices[hour];
+    }
 
 
     public async Task FetchPrices(CancellationToken cancellationToken)
@@ -22,49 +34,45 @@ public class PriceService
         client.BaseAddress = new Uri("https://www.ote-cr.cz/");
 
         var today = DateTime.UtcNow.Date;
-        if (LastFetchedDay == today)
-        {
-            Array.Copy(_tommorowPrices, _todayPrices, _todayPrices.Length);
-        }
-        else
-        {
-            await FetchDayPrices(client, _todayPrices, today, cancellationToken);
-        }
+        if (TodayFetched < today)
+            if (await FetchDayPrices(client, _todayPrices, today, cancellationToken))
+                TodayFetched = today;
 
-        await FetchDayPrices(client, _tommorowPrices, today.AddDays(1), cancellationToken);
-        
+        var tomorrow = today.AddDays(1);
+        if (TommorowFetched < tomorrow)
+            if (await FetchDayPrices(client, _tommorowPrices, today.AddDays(1), cancellationToken))
+                TommorowFetched = tomorrow;
     }
 
-    private async Task FetchDayPrices(HttpClient client,
+    private async Task<bool> FetchDayPrices(HttpClient client,
         double[] prices,
         DateTime utcDate,
         CancellationToken cancellationToken)
     {
-       
-        if (LastFetchedDay < utcDate)
+        var fetched = false;
+        var path = $"/cs/kratkodobe-trhy/elektrina/denni-trh/@@chart-data?report_date={utcDate:yyyy-MM-dd}";
+
+        var requestMessage = new HttpRequestMessage
         {
-            var path = $"/cs/kratkodobe-trhy/elektrina/denni-trh/@@chart-data?report_date={utcDate:yy-MM-dd}";
+            Method = HttpMethod.Get,
+            RequestUri = new Uri(path, UriKind.Relative)
+        };
 
-            HttpRequestMessage requestMessage = new HttpRequestMessage()
+        var result = await client.SendAsync(requestMessage, cancellationToken);
+        if (result.IsSuccessStatusCode)
+        {
+            var pricesDefinition =
+                await result.Content.ReadFromJsonAsync<OtePrices>(JsonSerializerOptions.Default, cancellationToken);
+            var priceArray = pricesDefinition?.data.dataLine.FirstOrDefault(x => x.type == "1");
+
+            for (var i = 0; priceArray?.point?.Length > 1 && i < 24; i++)
             {
-                Method = HttpMethod.Get,
-                RequestUri = new Uri(path, UriKind.Relative)
-            };
-
-            var result = await client.SendAsync(requestMessage, cancellationToken);
-            if (result.IsSuccessStatusCode)
-            {
-                var pricesDefinition =
-                    await result.Content.ReadFromJsonAsync<OtePrices>(JsonSerializerOptions.Default, cancellationToken);
-                var priceArray = pricesDefinition?.data.dataLine.FirstOrDefault(x => x.type == "1");
-
-                for (int i = 0; priceArray?.point?.Length > 1 && i < 24; i++)
-                {
-                    prices[i] = priceArray.point[i].y;
-                    LastFetchedDay = utcDate;
-                }
-
+                prices[i] = priceArray.point[i].y;
+                _logger.LogInformation("Price for day {d} at hour {i} is {p}", utcDate, i, prices[i]);
+                fetched = true;
             }
         }
+
+        return fetched;
     }
 }
