@@ -1,0 +1,38 @@
+version: '3'
+services: 
+        trader:
+                image: marekiss/arpeg_trader:latest
+                privileged: true
+                environment:
+                        - TZ=Europe/Prague
+                network_mode: "host"
+                ports:
+                        - 12345:12345
+                labels:
+                        logging: "promtail"
+                        logging_jobname: "GW bridge"
+                restart: always
+                volumes:
+                        - /dev:/dev
+        prometheus:
+                image: prom/prometheus
+                container_name: prometheus_trader_prod
+                network_mode: "host"
+                ports:
+                        - 9090:9090
+                command:
+                        - '--config.file=/etc/prometheus/prometheus.yml'
+                volumes:
+                        - ./ARPEG.Spot.Trader/prometheus.yml:/etc/prometheus/prometheus.yml                        
+                restart: unless-stopped
+        promtail:
+                image:  grafana/promtail:latest
+                network_mode: "host"
+                container_name: promtail_trader_prod
+                volumes:
+                        - ./ARPEG.Spot.Trader/promtailconfig.yml:/etc/promtail/docker-config.yaml
+                        - /var/lib/docker/containers:/var/lib/docker/containers
+                        - /var/run/docker.sock:/var/run/docker.sock
+                command: -config.file=/etc/promtail/docker-config.yaml 
+               
+
