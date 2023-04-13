@@ -20,7 +20,9 @@ jobs:
     - name: set env
       run: echo "tagversion=$(date +'%Y.%m.%d')" >> $GITHUB_ENV
     - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag marekiss/arpeg_trader:${{ env.tagversion }}
+      run: |
+        - cd ARPEG.Spot.Trader
+        - docker build . --file Dockerfile --tag marekiss/arpeg_trader:${{ env.tagversion }}
     - name: add tag latest
       run: docker tag marekiss/arpeg_trader:${{ env.tagversion }} marekiss/arpeg_trader:latest
     - name: Publish docker image
