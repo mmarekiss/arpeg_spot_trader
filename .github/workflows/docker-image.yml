@@ -11,17 +11,19 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
-    env:
-      tagversion: ${{ (date +%s) }}
     steps:
     - uses: actions/checkout@v3
     - uses: docker/login-action@v2.1.0
       with:
         username: marekiss
         password: 11121988
+    - name: set env
+      run: echo "tagversion=$(date +'%Y.%m.%d')" >> $GITHUB_ENV
     - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag marekiss/arpeg_trader:$tagversion
+      run: docker build . --file Dockerfile --tag marekiss/arpeg_trader:${{ env.tagversion }}
     - name: add tag latest
-      run: docker tag marekiss/arpeg_trader:$tagversion marekiss/arpeg_trader:latest
+      run: docker tag marekiss/arpeg_trader:${{ env.tagversion }} marekiss/arpeg_trader:latest
     - name: Publish docker image
-      run: docker push marekiss/arpeg_trader:$tagversion
+      run: |
+        - docker push marekiss/arpeg_trader:$tagversion
+        - docker push marekiss/arpeg_trader:latest
