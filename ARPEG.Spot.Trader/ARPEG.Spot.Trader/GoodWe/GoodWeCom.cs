@@ -271,6 +271,7 @@ public class GoodWeCom
                 {
                     Array.Copy(response.Result.Buffer, startIndex, value, 0, 2);
                     var result = BitConverter.ToInt16(value.Reverse().ToArray());
+                    result = FitLimits(result, point);
                     _logger.LogInformation($"{point.Description}: {result}");
                     TraceGauge(point.Group, point.Description, result);
                     yield return new DataValue(point.Address, point.Description, FitLimits(result, point));
