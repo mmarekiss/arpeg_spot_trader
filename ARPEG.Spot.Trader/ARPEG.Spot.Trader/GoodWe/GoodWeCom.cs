@@ -133,7 +133,7 @@ public class GoodWeCom
             new DataPoint("Battery", "DisCurrMax", 45355, Min: 0),
             new DataPoint("Battery", "SOC Min ", 45356),
             new DataPoint("Battery", "Offline Volt Min", 45357),
-            new DataPoint("Battery", "Offline Volt Min", 45358)
+            new DataPoint("Battery", "Offline SOC Min", 45358)
         ).ToListAsync(cancellationToken: cancellationToken);
 
         await GetInt16Values(
