@@ -5,7 +5,7 @@ services:
                 privileged: true
                 environment:
                         - TZ=Europe/Prague
-                network_mode: "host"
+                network_mode: host
                 ports:
                         - 12345:12345
                 labels:
@@ -17,7 +17,7 @@ services:
         prometheus:
                 image: prom/prometheus
                 container_name: prometheus_trader_prod
-                network_mode: "host"
+                network_mode: host
                 ports:
                         - 9090:9090
                 command:
@@ -27,12 +27,14 @@ services:
                 restart: unless-stopped
         promtail:
                 image:  grafana/promtail:latest
-                network_mode: "host"
                 container_name: promtail_trader_prod
+                network_mode: host
                 volumes:
                         - ./ARPEG.Spot.Trader/promtailconfig.yml:/etc/promtail/docker-config.yaml
                         - /var/lib/docker/containers:/var/lib/docker/containers
                         - /var/run/docker.sock:/var/run/docker.sock
                 command: -config.file=/etc/promtail/docker-config.yaml 
+
+
                
 

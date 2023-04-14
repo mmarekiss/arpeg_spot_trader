@@ -113,10 +113,12 @@ public class GoodWeCom
             new DataPoint("Grid", "L3", 36024),
             new DataPoint("Grid", "Total", 36026)
         ).ToListAsync(cancellationToken: cancellationToken);
-        
+
         await GetInt16Values(
             new DataPoint("Export", "Enabled", 47509, Min: 0, Max: 1),
             new DataPoint("Export", "Limit", 47510, Min: 0),
+            new DataPoint("Trade", "Mode", 47511, Min: 0, Max: 5),
+            new DataPoint("Trade", "Charge", 47512, Min: 0),
             new DataPoint("Battery", "GridCharge FROM ", 47515),
             new DataPoint("Battery", "GridCharge TO", 47516),
             new DataPoint("Battery", "GridCharge", 47517)

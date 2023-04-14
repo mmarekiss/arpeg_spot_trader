@@ -1,0 +1,14 @@
+{
+  "profiles": {
+    "ARPEG.Sport.Licence.Server": {
+      "commandName": "Project",
+      "commandLineArgs": "--port 7081"
+    },
+    "Docker": {
+      "commandName": "Docker",
+      "launchUrl": "{Scheme}://{ServiceHost}:{ServicePort}",
+      "httpPort": 31638,
+      "useSSL": false
+    }
+  }
+}

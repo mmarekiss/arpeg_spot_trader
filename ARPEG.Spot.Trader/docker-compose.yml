@@ -24,7 +24,7 @@ services:
                         - '--config.file=/etc/prometheus/prometheus.yml'
                 volumes:
                         - ./prometheus.yml:/etc/prometheus/prometheus.yml                        
-                restart: unless-stopped
+                restart: always
         promtail:
                 image:  grafana/promtail:latest
                 # network_mode: "host"
@@ -34,5 +34,6 @@ services:
                         - /var/lib/docker/containers:/var/lib/docker/containers
                         - /var/run/docker.sock:/var/run/docker.sock
                 command: -config.file=/etc/promtail/docker-config.yaml 
+                restart: always
                
 
