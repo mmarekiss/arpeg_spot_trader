@@ -1,6 +1,7 @@
 ﻿using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using ARPEG.Spot.Trader.Integration;
 using Microsoft.Extensions.Logging;
 using Prometheus;
 
@@ -19,6 +20,7 @@ public class GoodWeCom
     private string Name { get; set; }
 
     private IPAddress? IpAddress { get; set; }
+    private LicenceVersion? LicenceVersion { get; set; }
 
     public void InitHostname(IPAddress ipAddress)
     {
@@ -122,6 +124,16 @@ public class GoodWeCom
             new DataPoint("Battery", "GridCharge FROM ", 47515),
             new DataPoint("Battery", "GridCharge TO", 47516),
             new DataPoint("Battery", "GridCharge", 47517)
+        ).ToListAsync(cancellationToken: cancellationToken);
+        
+        await GetInt16Values(
+            new DataPoint("Battery", "V Max", 45352),
+            new DataPoint("Battery", "I Max", 45353),
+            new DataPoint("Battery", "Volt Under Min", 45354),
+            new DataPoint("Battery", "DisCurrMax", 45355, Min: 0),
+            new DataPoint("Battery", "SOC Min ", 45356),
+            new DataPoint("Battery", "Offline Volt Min", 45357),
+            new DataPoint("Battery", "Offline Volt Min", 45358)
         ).ToListAsync(cancellationToken: cancellationToken);
 
         await GetInt16Values(
@@ -290,5 +302,10 @@ public class GoodWeCom
         if (point.Max.HasValue && result < point.Max.Value)
             return point.Max.Value;
         return result;
+    }
+
+    public void SetLicence(LicenceVersion licenceVersion)
+    {
+        LicenceVersion = licenceVersion;
     }
 }

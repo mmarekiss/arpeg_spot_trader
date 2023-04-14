@@ -1,5 +1,7 @@
 ﻿using System.Net;
+using System.Net.Http.Json;
 using ARPEG.Spot.Trader.Config;
+using ARPEG.Spot.Trader.Integration;
 using ARPEG.Spot.Trader.Store;
 using ARPEG.Spot.Trader.Utils;
 using Microsoft.Extensions.Hosting;
@@ -52,14 +54,32 @@ public class GoodWeFetcher : BackgroundService
         IPAddress address,
         CancellationToken cancellationToken)
     {
-        var communicator = _serviceProvider.GetService<GoodWeCom>() ??
-                           throw new ApplicationException("please define goodWe comm");
-        communicator.InitHostname(address);
-        communicator.InitInverterName(name);
-        _invStore.AddGoodWe(communicator);
-        while (!cancellationToken.IsCancellationRequested)
+        var licence = await FetchLicence(name);
+
+        if (licence is not null && licence.LicenceVersion != LicenceVersion.None)
         {
-            await communicator.GetHomeConsumption(cancellationToken);
+            _logger.LogWarning("Your licence for {name} is {lic}", name, licence.LicenceVersion.ToString());
+
+            var communicator = _serviceProvider.GetService<GoodWeCom>() ??
+                               throw new ApplicationException("please define goodWe comm");
+            communicator.InitHostname(address);
+            communicator.InitInverterName(name);
+            communicator.SetLicence(licence.LicenceVersion);
+            _invStore.AddGoodWe(communicator);
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                await communicator.GetHomeConsumption(cancellationToken);
+            }
         }
+        else
+        {
+            _logger.LogWarning("You don't have licence for {name}", name);
+        }
+    }
+
+    private async Task<RunLicence?> FetchLicence(string name)
+    {
+        var client = new HttpClient();
+        return await client.GetFromJsonAsync<RunLicence>($"https://arpeg-licences.azurewebsites.net/api/getLicence/{name}");
     }
 }

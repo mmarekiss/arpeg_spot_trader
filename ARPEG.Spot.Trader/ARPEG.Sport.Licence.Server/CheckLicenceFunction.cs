@@ -25,7 +25,7 @@ public class CheckLicenceFunction
 
         var response = req.CreateResponse(HttpStatusCode.OK);
 
-        await response.WriteAsJsonAsync(new GetLicence
+        await response.WriteAsJsonAsync(new Spot.Trader.Integration.RunLicence
         {
             SerialNumber = sn,
             LicenceVersion = LicenceVersion.Standard

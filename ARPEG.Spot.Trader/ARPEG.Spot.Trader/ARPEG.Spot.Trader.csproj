@@ -27,4 +27,8 @@
       </None>
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\ARPEG.Spot.Trader.Integration\ARPEG.Spot.Trader.Integration.csproj" />
+    </ItemGroup>
+
 </Project>
