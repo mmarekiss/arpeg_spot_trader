@@ -5,10 +5,10 @@ on:
     - main
 env:
   AZURE_FUNCTIONAPP_NAME: ARPEG-licences
-  AZURE_FUNCTIONAPP_PACKAGE_PATH: ARPEG.Sport.Licence.Server/published
+  AZURE_FUNCTIONAPP_PACKAGE_PATH: ARPEG.Spot.Trader/ARPEG.Sport.Licence.Server/published
   CONFIGURATION: Release
   DOTNET_CORE_VERSION: 7.0.x
-  WORKING_DIRECTORY: ARPEG.Sport.Licence.Server
+  WORKING_DIRECTORY: ARPEG.Spot.Trader/ARPEG.Sport.Licence.Server
   DOTNET_CORE_VERSION_INPROC: 6.0.x
 jobs:
   build:
