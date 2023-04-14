@@ -68,7 +68,8 @@ public class PriceFetcher : BackgroundService
             var exportLimitDef = _gridOptions.CurrentValue.ExportLimit;
             var exportLimit = exportLimitDef ?? (ushort)10_000;
 
-            if (price < 10)
+            if (price < 0
+                || (_priceService.IsMinPriceOfNight() && !_forecastService.PossibleFulfillBattery()))
             {
                 exportLimit = Math.Min(exportLimit, (ushort)200);
                 await InvokeMethod(g => g.SetExportLimit(exportLimit, stoppingToken));

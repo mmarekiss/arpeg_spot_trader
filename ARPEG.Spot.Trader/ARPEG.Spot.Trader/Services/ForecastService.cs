@@ -5,10 +5,9 @@ namespace ARPEG.Spot.Trader.Services;
 
 public class ForecastService
 {
-    private readonly ILogger<ForecastService> _logger;
-
     private readonly int[] _forecastForToday = new int[24];
     private readonly int[] _forecastForTommorow = new int[24];
+    private readonly ILogger<ForecastService> _logger;
 
     private DateTime ForecastDay = DateTime.MinValue;
 
@@ -22,7 +21,7 @@ public class ForecastService
         _logger.LogInformation("Current date time is {dt}", DateTime.Now);
         return _forecastForToday[DateTime.Now.Hour];
     }
-    
+
     public int GetMaxForecast()
     {
         return _forecastForToday.Max();
@@ -40,7 +39,9 @@ public class ForecastService
         }
     }
 
-    private async Task GetForecast(string type, int[] array, CancellationToken cancellationToken)
+    private async Task GetForecast(string type,
+        int[] array,
+        CancellationToken cancellationToken)
     {
         using var client = new HttpClient();
 
@@ -54,9 +55,22 @@ public class ForecastService
             if (splitedValues?.Length == 25 && DateTime.TryParseExact(splitedValues[0], "yyyy-MM-dd",
                                                 CultureInfo.InvariantCulture, DateTimeStyles.None, out var date)
                                             && ForecastDay < date)
-            {
                 Array.Copy(splitedValues.Skip(1).Select(int.Parse).ToArray(), array, 24);
-            }
         }
+    }
+
+    public bool PossibleFulfillBattery()
+    {
+        var hour = DateTime.Now.Hour;
+        return
+            PossibleFulfillBattery(
+                hour > 17
+                    ? _forecastForTommorow
+                    : _forecastForToday);
+    }
+
+    private static bool PossibleFulfillBattery(int[] forecast)
+    {
+        return forecast.Sum() > 1000;
     }
 }

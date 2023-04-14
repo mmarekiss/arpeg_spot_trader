@@ -20,6 +20,26 @@ public class PriceService
 
     private DateTime TommorowFetched { get; set; } = DateTime.MinValue;
 
+    public bool IsMinPriceOfNight()
+    {
+        var hour = DateTime.Now.Hour;
+        if (hour < 8)
+        {
+            return _todayPrices.Take(8).Select((v, i) => new { v, i }).OrderBy(o => o.v).Select(v=>v.i).First() == hour;
+        }
+
+        if (hour > 18)
+        {
+            return _todayPrices.Skip(18).Select((v, i) => new { v, i })
+                .Concat(_tommorowPrices.Take(8).Select((v, i) => new { v, i }))
+                .OrderBy(o => o.v)
+                .Select(x=>x.i).First() == hour;
+        }
+
+        return false;
+    }
+    
+
     public double GetCurrentPrice()
     {
         var hour = DateTime.Now.Hour;
