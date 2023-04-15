@@ -1,6 +1,8 @@
-﻿using System.Net;
+﻿using System.Device.Gpio.Drivers;
+using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using ARPEG.Spot.Trader.BitOutputs;
 using ARPEG.Spot.Trader.Constants;
 using Microsoft.Extensions.Logging;
 using Prometheus;
@@ -11,10 +13,13 @@ public class GoodWeCom
 {
     private readonly Dictionary<string, Gauge> _gauges = new();
     private readonly ILogger<GoodWeCom> _logger;
+    private readonly IEnumerable<IBitController> _bitControllers;
 
-    public GoodWeCom(ILogger<GoodWeCom> logger)
+    public GoodWeCom(ILogger<GoodWeCom> logger,
+        IEnumerable<IBitController> bitControllers)
     {
         _logger = logger;
+        _bitControllers = bitControllers;
     }
 
 
@@ -102,10 +107,10 @@ public class GoodWeCom
         _logger.LogInformation("=============================");
         await GetInt16Values(
             definition,
-            new DataPoint("Grid", "L1", 36020),
-            new DataPoint("Grid", "L2", 36022),
-            new DataPoint("Grid", "L3", 36024),
-            new DataPoint("Grid", "Total", 36026)
+            new DataPoint("Grid", "L1", 36020, Max: 10_000),
+            new DataPoint("Grid", "L2", 36022, Max: 10_000),
+            new DataPoint("Grid", "L3", 36024, Max: 10_000),
+            new DataPoint("Grid", "Total", 36026, Max: 10_000)
         ).ToListAsync(cancellationToken);
 
         await GetInt16Values(
@@ -114,39 +119,39 @@ public class GoodWeCom
             new DataPoint("Export", "Limit", 47510, 0),
             new DataPoint("Trade", "Mode", 47511, 0),
             new DataPoint("Trade", "Charge", 47512, 0),
-            new DataPoint(DataPointsNames.Battery, "GridCharge FROM ", 47515),
-            new DataPoint(DataPointsNames.Battery, "GridCharge TO", 47516),
-            new DataPoint(DataPointsNames.Battery, "GridCharge", 47517)
+            new DataPoint(DataGroupNames.Battery, "GridCharge FROM ", 47515),
+            new DataPoint(DataGroupNames.Battery, "GridCharge TO", 47516),
+            new DataPoint(DataGroupNames.Battery, "GridCharge", 47517)
         ).ToListAsync(cancellationToken);
 
         await GetInt16Values(
             definition,
-            new DataPoint(DataPointsNames.Battery, "V Max", 45352),
-            new DataPoint(DataPointsNames.Battery, "I Max", 45353),
-            new DataPoint(DataPointsNames.Battery, "Volt Under Min", 45354),
-            new DataPoint(DataPointsNames.Battery, "DisCurrMax", 45355, 0),
-            new DataPoint(DataPointsNames.Battery, "SOC Min ", 45356, 0, 100),
-            new DataPoint(DataPointsNames.Battery, "Offline Volt Min", 45357),
-            new DataPoint(DataPointsNames.Battery, "Offline SOC Min", 45358, 0, 100)
+            new DataPoint(DataGroupNames.Battery, "V Max", 45352),
+            new DataPoint(DataGroupNames.Battery, "I Max", 45353),
+            new DataPoint(DataGroupNames.Battery, "Volt Under Min", 45354),
+            new DataPoint(DataGroupNames.Battery, "DisCurrMax", 45355, 0),
+            new DataPoint(DataGroupNames.Battery, "SOC Min ", 45356, 0, 100),
+            new DataPoint(DataGroupNames.Battery, "Offline Volt Min", 45357),
+            new DataPoint(DataGroupNames.Battery, "Offline SOC Min", 45358, 0, 100)
         ).ToListAsync(cancellationToken);
 
         await GetInt16Values(
             definition,
-            new DataPoint(DataPointsNames.Battery, "V", 35180, 0),
-            new DataPoint(DataPointsNames.Battery, "I", 35181),
-            new DataPoint(DataPointsNames.Battery, "W", 35183),
-            new DataPoint(DataPointsNames.Battery, "Mode", 35184, 0, 4)
+            new DataPoint(DataGroupNames.Battery, "V", 35180, 0),
+            new DataPoint(DataGroupNames.Battery, "I", 35181),
+            new DataPoint(DataGroupNames.Battery, "W", 35183),
+            new DataPoint(DataGroupNames.Battery, "Mode", 35184, 0, 4)
         ).ToListAsync(cancellationToken);
 
         await GetInt16Values(
             definition,
-            new DataPoint(DataPointsNames.Battery, "BMS", 37002),
-            new DataPoint(DataPointsNames.Battery, "Temperature", 37003),
-            new DataPoint(DataPointsNames.Battery, "ChargeImax", 37004),
-            new DataPoint(DataPointsNames.Battery, "DischargeImax", 37005),
-            new DataPoint(DataPointsNames.Battery, "bmErrCode", 37006),
-            new DataPoint(DataPointsNames.Battery, BatteryGroupParts.SOC, 37007, 0, 100),
-            new DataPoint(DataPointsNames.Battery, "bmsSOH", 37008)
+            new DataPoint(DataGroupNames.Battery, "BMS", 37002),
+            new DataPoint(DataGroupNames.Battery, "Temperature", 37003),
+            new DataPoint(DataGroupNames.Battery, "ChargeImax", 37004),
+            new DataPoint(DataGroupNames.Battery, "DischargeImax", 37005),
+            new DataPoint(DataGroupNames.Battery, "bmErrCode", 37006),
+            new DataPoint(DataGroupNames.Battery, BatteryGroupParts.SOC, 37007, 0, 100),
+            new DataPoint(DataGroupNames.Battery, "bmsSOH", 37008)
         ).ToListAsync(cancellationToken);
 
 
@@ -156,51 +161,56 @@ public class GoodWeCom
             new DataPoint("Backup I", "L1", 35146),
             new DataPoint("Backup Freq", "L1", 35147),
             new DataPoint("Backup Mode", "L1", 35148),
-            new DataPoint("Backup Watt", "L1", 35150),
+            new DataPoint("Backup Watt", "L1", 35150, Max: 10_000),
             new DataPoint("Backup V", "L2", 35151),
             new DataPoint("Backup I", "L2", 35152),
             new DataPoint("Backup Freq", "L2", 35153),
             new DataPoint("Backup Mode", "L2", 35154),
-            new DataPoint("Backup Watt", "L2", 35156),
+            new DataPoint("Backup Watt", "L2", 35156, Max: 10_000),
             new DataPoint("Backup V", "L3", 35157),
             new DataPoint("Backup I", "L3", 35158),
             new DataPoint("Backup Freq", "L3", 35159),
             new DataPoint("Backup Mode", "L3", 35160),
-            new DataPoint("Backup Watt", "L3", 35162),
-            new DataPoint("Backup Watt", "Total", 35170)
+            new DataPoint("Backup Watt", "L3", 35162, Max: 10_000),
+            new DataPoint("Backup Watt", "Total", 35170, Max: 10_000)
         ).ToListAsync(cancellationToken);
 
         await GetInt16Values(
             definition,
-            new DataPoint("Feed", "L1", 35125, -10),
-            new DataPoint("Feed", "L2", 35130, -10),
-            new DataPoint("Feed", "L3", 35135, -10),
-            new DataPoint("Feed", "Total", 35138, -10)
+            new DataPoint("Feed", "L1", 35125, -10, Max: 10_000),
+            new DataPoint("Feed", "L2", 35130, -10, Max: 10_000),
+            new DataPoint("Feed", "L3", 35135, -10, Max: 10_000),
+            new DataPoint("Feed", "Total", 35138, -10, Max: 10_000)
         ).ToListAsync(cancellationToken);
 
         await GetInt16Values(
             definition,
-            new DataPoint("Consumption", "L1", 35164, 0),
-            new DataPoint("Consumption", "L2", 35166, 0),
-            new DataPoint("Consumption", "L3", 35168, 0),
-            new DataPoint("Consumption", "Total", 35172, 0)
+            new DataPoint("Consumption", "L1", 35164, 0, Max: 10_000),
+            new DataPoint("Consumption", "L2", 35166, 0, Max: 10_000),
+            new DataPoint("Consumption", "L3", 35168, 0, Max: 10_000),
+            new DataPoint("Consumption", "Total", 35172, 0, Max: 10_000)
         ).ToListAsync(cancellationToken);
 
-        await GetInt16Values(
+        var data = await GetInt16Values(
             definition,
-            new DataPoint(DataPointsNames.PV, "PV1_Voltage", 35103, 0),
-            new DataPoint(DataPointsNames.PV, "PV1_Current", 35104, 0),
-            new DataPoint(DataPointsNames.PV, "PV1_Wats", 35106, 0),
-            new DataPoint(DataPointsNames.PV, "PV2_Voltage", 35107, 0),
-            new DataPoint(DataPointsNames.PV, "PV2_Current", 35108, 0),
-            new DataPoint(DataPointsNames.PV, "PV2_Wats", 35110, 0)
+            new DataPoint(DataGroupNames.PV, "PV1_Voltage", 35103, 0),
+            new DataPoint(DataGroupNames.PV, "PV1_Current", 35104, 0),
+            new DataPoint(DataGroupNames.PV, PVGroupParts.PV2_Wats, 35106, 0),
+            new DataPoint(DataGroupNames.PV, "PV2_Voltage", 35107, 0),
+            new DataPoint(DataGroupNames.PV, "PV2_Current", 35108, 0),
+            new DataPoint(DataGroupNames.PV, PVGroupParts.PV2_Wats, 35110, 0)
         ).ToListAsync(cancellationToken);
 
+        var sum = data.Where(x => x.part == PVGroupParts.PV2_Wats || x.part == PVGroupParts.PV1_Wats).Sum(x => x.value);
+        foreach (var bitController in _bitControllers)
+        {
+            _ = bitController.HandleDataValue(definition, new DataValue(0, DataGroupNames.PV, PVGroupParts.Wats, (short)sum));
+        }
         await GetInt16Values(
             definition,
-            new DataPoint("Temperature", "Temperature_Air", 35174, 0),
-            new DataPoint("Temperature", "Temperature_Radiator", 35176, 0),
-            new DataPoint("Temperature", "Temperature_Module", 35175, 0)
+            new DataPoint("Temperature", "Temperature_Air", 35174, 0, 80),
+            new DataPoint("Temperature", "Temperature_Radiator", 35176, 0, 80),
+            new DataPoint("Temperature", "Temperature_Module", 35175, 0, 80)
         ).ToListAsync(cancellationToken);
     }
 
@@ -276,7 +286,13 @@ public class GoodWeCom
                     result = FitLimits(result, point);
                     _logger.LogInformation($"{point.Description}: {result}");
                     TraceGauge(definition, point.Group, point.Description, result);
-                    yield return new DataValue(point.Address, point.Group, point.Description, FitLimits(result, point));
+                    var resultValue = new DataValue(point.Address, point.Group, point.Description, FitLimits(result, point));
+                    foreach (var bitController in _bitControllers)
+                    {
+                        _ = bitController.HandleDataValue(definition, resultValue);
+                    }
+
+                    yield return resultValue;
                 }
                 else
                 {
@@ -296,14 +312,5 @@ public class GoodWeCom
             return (short)point.Max.Value;
         return result;
     }
-
-    private int FitLimits(int result,
-        DataPoint point)
-    {
-        if (point.Min.HasValue && result < point.Min.Value)
-            return point.Min.Value;
-        if (point.Max.HasValue && result > point.Max.Value)
-            return point.Max.Value;
-        return result;
-    }
+    
 }
