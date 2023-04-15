@@ -4,11 +4,11 @@ namespace ARPEG.Spot.Trader.Store;
 
 public class GoodWeInvStore
 {
-    private List<GoodWeCom> _gws = new();
+    private List<Definition> _gws = new();
 
-    public IEnumerable<GoodWeCom> GoodWes => _gws; 
+    public IEnumerable<Definition> GoodWes => _gws; 
 
-    public void AddGoodWe(GoodWeCom gw)
+    public void AddGoodWe(Definition gw)
     {
         _gws.Add(gw);
     }

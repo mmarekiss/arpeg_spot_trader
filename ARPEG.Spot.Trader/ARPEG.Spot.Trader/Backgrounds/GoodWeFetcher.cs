@@ -60,15 +60,19 @@ public class GoodWeFetcher : BackgroundService
         {
             _logger.LogWarning("Your licence for {name} is {lic}", name, licence.LicenceVersion.ToString());
 
+            var definition = new Definition()
+            {
+                SN = name,
+                Address = address,
+                Licence = licence.LicenceVersion
+            }; 
+            _invStore.AddGoodWe(definition);
             var communicator = _serviceProvider.GetService<GoodWeCom>() ??
                                throw new ApplicationException("please define goodWe comm");
-            communicator.InitHostname(address);
-            communicator.InitInverterName(name);
-            communicator.SetLicence(licence.LicenceVersion);
-            _invStore.AddGoodWe(communicator);
+            
             while (!cancellationToken.IsCancellationRequested)
             {
-                await communicator.GetHomeConsumption(cancellationToken);
+                await communicator.GetHomeConsumption(definition, cancellationToken);
             }
         }
         else

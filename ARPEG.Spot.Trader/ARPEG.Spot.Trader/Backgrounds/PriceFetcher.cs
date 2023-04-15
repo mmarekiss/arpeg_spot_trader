@@ -11,28 +11,31 @@ namespace ARPEG.Spot.Trader.Backgrounds;
 
 public class PriceFetcher : BackgroundService
 {
+    private readonly GoodWeCom _communicator;
     private readonly ForecastService _forecastService;
-    private readonly IOptionsMonitor<Grid> _gridOptions;
     private readonly Gauge _gauge;
     private readonly Gauge _gaugePvForecast;
+    private readonly IOptionsMonitor<Grid> _gridOptions;
     private readonly GoodWeInvStore _invStore;
     private readonly ILogger<PriceFetcher> _logger;
     private readonly PriceService _priceService;
 
     public PriceFetcher(PriceService priceService,
+        GoodWeCom communicator,
         ForecastService forecastService,
         IOptionsMonitor<Grid> gridOptions,
         GoodWeInvStore invStore,
         ILogger<PriceFetcher> logger)
     {
         _priceService = priceService;
+        _communicator = communicator;
         _forecastService = forecastService;
         _gridOptions = gridOptions;
         _invStore = invStore;
         _logger = logger;
 
         _gauge = Metrics.CreateGauge("Price", "Current price from OTE");
-        _gaugePvForecast = Metrics.CreateGauge("PV_forecast", "Solar forecast");
+        _gaugePvForecast = Metrics.CreateGauge("PV_forecast", "Solar forecast", "part");
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -51,7 +54,7 @@ public class PriceFetcher : BackgroundService
                 _logger.LogWarning(exc, "Some error during price fetching");
             }
 
-            await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
+            await Task.Delay(TimeSpan.FromMinutes(20), stoppingToken);
         }
     }
 
@@ -59,39 +62,45 @@ public class PriceFetcher : BackgroundService
     {
         var price = _priceService.GetCurrentPrice();
         var pvForecast = _forecastService.GetCurrentForecast();
-        var pvMaxForecast = _forecastService.GetCurrentForecast();
+        var pForecast24 = _forecastService.GetForecast24();
         _gauge.Set(price);
-        _gaugePvForecast.Set(pvForecast);
+        _gaugePvForecast.WithLabels("now").Set(pvForecast);
+        _gaugePvForecast.WithLabels("24").Set(pForecast24);
 
         if (_gridOptions.CurrentValue.TradeEnergy)
         {
             var exportLimitDef = _gridOptions.CurrentValue.ExportLimit;
-            var exportLimit = exportLimitDef ?? (ushort)10_000;
+            var exportLimit = exportLimitDef ?? 10_000;
 
-            if (price < 0
-                || (_priceService.IsMinPriceOfNight() && !_forecastService.PossibleFulfillBattery()))
+            if (price < 10)
             {
                 exportLimit = Math.Min(exportLimit, (ushort)200);
-                await InvokeMethod(g => g.SetExportLimit(exportLimit, stoppingToken));
+                await InvokeMethod(g => _communicator.SetExportLimit(exportLimit, g, stoppingToken));
             }
             else if (exportLimitDef.HasValue)
             {
-                await InvokeMethod(g => g.SetExportLimit(exportLimit, stoppingToken));
+                await InvokeMethod(g => _communicator.SetExportLimit(exportLimit, g, stoppingToken));
             }
-            else 
+            else
             {
-                await InvokeMethod(g => g.DisableExportLimit(stoppingToken));
+                await InvokeMethod(g => _communicator.DisableExportLimit(g, stoppingToken));
             }
 
-            if (price < -10 && pvForecast < 10 && pvMaxForecast < 50)
-                await InvokeMethod(g => g.ForceBatteryCharge(stoppingToken));
+            if ((price < -10 && pvForecast < 100)
+                || (_priceService.IsMinPriceOfNight() && !_forecastService.PossibleFulfillBattery()))
+                await InvokeMethod(g =>
+                    _communicator.ForceBatteryCharge(g, _gridOptions.CurrentValue.ChargePower, stoppingToken));
             else
-                await InvokeMethod(g => g.StopForceBatteryCharge(stoppingToken));
+                await InvokeMethod(g => _communicator.StopForceBatteryCharge(g, stoppingToken));
+        }
+        else
+        {
+            _logger.LogInformation("Energy trading is disabled");
         }
     }
 
-    private async Task InvokeMethod(Func<GoodWeCom, Task> invokeFunc)
+    private async Task InvokeMethod(Func<Definition, Task> invokeFunc)
     {
-        await Task.WhenAll(_invStore.GoodWes.Select(invokeFunc.Invoke));
+        await Task.WhenAll(_invStore.GoodWes.Select(invokeFunc));
     }
 }

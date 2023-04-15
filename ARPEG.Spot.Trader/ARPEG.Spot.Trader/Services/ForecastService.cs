@@ -1,5 +1,7 @@
 ﻿using System.Globalization;
+using ARPEG.Spot.Trader.Config;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace ARPEG.Spot.Trader.Services;
 
@@ -8,18 +10,29 @@ public class ForecastService
     private readonly int[] _forecastForToday = new int[24];
     private readonly int[] _forecastForTommorow = new int[24];
     private readonly ILogger<ForecastService> _logger;
+    private readonly IOptionsMonitor<PvForecast> _pvForecast;
 
     private DateTime ForecastDay = DateTime.MinValue;
 
-    public ForecastService(ILogger<ForecastService> logger)
+    public ForecastService(ILogger<ForecastService> logger,
+        IOptionsMonitor<PvForecast> pvForecast)
     {
         _logger = logger;
+        _pvForecast = pvForecast;
     }
 
     public int GetCurrentForecast()
     {
         _logger.LogInformation("Current date time is {dt}", DateTime.Now);
         return _forecastForToday[DateTime.Now.Hour];
+    }
+    
+    public int GetForecast24()
+    {
+        _logger.LogInformation("Current date time is {dt}", DateTime.Now);
+        var hour = DateTime.Now.Hour;
+        return _forecastForTommorow.Take(hour + 1).Sum()
+            + _forecastForToday.Skip(hour + 1).Sum();
     }
 
     public int GetMaxForecast()
@@ -64,13 +77,13 @@ public class ForecastService
         var hour = DateTime.Now.Hour;
         return
             PossibleFulfillBattery(
-                hour > 17
+                hour > 17 || hour < 8
                     ? _forecastForTommorow
                     : _forecastForToday);
     }
 
-    private static bool PossibleFulfillBattery(int[] forecast)
+    private bool PossibleFulfillBattery(int[] forecast)
     {
-        return forecast.Sum() > 1000;
+        return forecast.Sum() < _pvForecast.CurrentValue.MinSumPVForCharge;
     }
 }

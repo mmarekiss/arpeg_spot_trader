@@ -28,10 +28,9 @@ public class GoodWeFinder
                 {
                     foreach (var ip in chunk)
                     {
-                        _goodWe.InitHostname(ip);
                         try
                         {
-                            var sn = await _goodWe.GetInverterName();
+                            var sn = await _goodWe.GetInverterName(ip);
                             if (!string.IsNullOrWhiteSpace(sn))
                                 lock (result)
                                 {

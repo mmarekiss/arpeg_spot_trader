@@ -16,6 +16,7 @@ namespace ARPEG.Spot.Trader
         {
             services.Configure<Grid>(configuration.GetSection(nameof(Grid)));
             services.Configure<GoodWe>(configuration.GetSection(nameof(GoodWe)));
+            services.Configure<PvForecast>(configuration.GetSection(nameof(PvForecast)));
             services.Configure<Root>(configuration);
             
             
