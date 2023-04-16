@@ -195,7 +195,7 @@ public class GoodWeCom
             definition,
             new DataPoint(DataGroupNames.PV, "PV1_Voltage", 35103, 0),
             new DataPoint(DataGroupNames.PV, "PV1_Current", 35104, 0),
-            new DataPoint(DataGroupNames.PV, PVGroupParts.PV2_Wats, 35106, 0),
+            new DataPoint(DataGroupNames.PV, PVGroupParts.PV1_Wats, 35106, 0),
             new DataPoint(DataGroupNames.PV, "PV2_Voltage", 35107, 0),
             new DataPoint(DataGroupNames.PV, "PV2_Current", 35108, 0),
             new DataPoint(DataGroupNames.PV, PVGroupParts.PV2_Wats, 35110, 0)
