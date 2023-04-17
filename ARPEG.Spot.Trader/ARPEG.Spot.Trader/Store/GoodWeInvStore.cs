@@ -2,7 +2,7 @@
 
 namespace ARPEG.Spot.Trader.Store;
 
-public class GoodWeInvStore
+public class GoodWeInvStore : IGoodWeInvStore
 {
     private List<Definition> _gws = new();
 

@@ -5,7 +5,7 @@ using Microsoft.Extensions.Options;
 
 namespace ARPEG.Spot.Trader.Services;
 
-public class ConfigUpdater
+public class ConfigUpdater : IConfigUpdater
 {
     private readonly IOptionsMonitor<Root> _optionsRoot;
 
@@ -17,6 +17,11 @@ public class ConfigUpdater
     public Root GetCurrent()
         => _optionsRoot.CurrentValue;
 
-    public Task SaveCurrent(Root root, CancellationToken cancellationToken)
-        => File.WriteAllTextAsync(AppSettings.UserAppSettingsFile, JsonSerializer.Serialize(root), cancellationToken);
+    public Task SaveCurrent(Root root,
+        CancellationToken cancellationToken)
+    {
+        System.IO.FileInfo file = new System.IO.FileInfo(AppSettings.UserAppSettingsFile);
+        file.Directory?.Create();
+        return File.WriteAllTextAsync(AppSettings.UserAppSettingsFile, JsonSerializer.Serialize(root), cancellationToken);
+    }
 }

@@ -8,7 +8,6 @@ using ARPEG.Spot.Trader.Store;
 using ARPEG.Spot.Trader.Utils;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 using Prometheus;
 using TecoBridge.GoodWe;
 
@@ -41,10 +40,11 @@ namespace ARPEG.Spot.Trader
             services.AddTransient<GoodWeCom>();
             services.AddSingleton<PriceService>();
             services.AddSingleton<ForecastService>();
-            services.AddSingleton<GoodWeInvStore>();
+            services.AddSingleton<IGoodWeInvStore, GoodWeInvStore>();
+            services.AddSingleton<IConfigUpdater, ConfigUpdater>();
 
             services.AddHostedService<GoodWeFetcher>();
-            services.AddHostedService<PriceFetcher>();
+            // services.AddHostedService<PriceFetcher>();
             
             services.AddMetricServer(options =>
             {

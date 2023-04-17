@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ARPEG.Sport.Licence.Server"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ARPEG.Spot.Trader.Integration", "ARPEG.Spot.Trader.Integration\ARPEG.Spot.Trader.Integration.csproj", "{3A953AA5-85E6-49CC-AA88-F019D93058A0}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ARPEG.Spot.Trader.UI", "ARPEG.Spot.Trader.UI\ARPEG.Spot.Trader.UI.csproj", "{0437CAD7-32A0-465B-B558-A12ED72A9E40}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{3A953AA5-85E6-49CC-AA88-F019D93058A0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3A953AA5-85E6-49CC-AA88-F019D93058A0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3A953AA5-85E6-49CC-AA88-F019D93058A0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0437CAD7-32A0-465B-B558-A12ED72A9E40}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0437CAD7-32A0-465B-B558-A12ED72A9E40}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0437CAD7-32A0-465B-B558-A12ED72A9E40}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0437CAD7-32A0-465B-B558-A12ED72A9E40}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

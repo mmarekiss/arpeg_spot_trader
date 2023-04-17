@@ -16,7 +16,7 @@ public class PriceFetcher : BackgroundService
     private readonly Gauge _gauge;
     private readonly Gauge _gaugePvForecast;
     private readonly IOptionsMonitor<Grid> _gridOptions;
-    private readonly GoodWeInvStore _invStore;
+    private readonly IGoodWeInvStore _invStore;
     private readonly ILogger<PriceFetcher> _logger;
     private readonly PriceService _priceService;
 
@@ -24,7 +24,7 @@ public class PriceFetcher : BackgroundService
         GoodWeCom communicator,
         ForecastService forecastService,
         IOptionsMonitor<Grid> gridOptions,
-        GoodWeInvStore invStore,
+        IGoodWeInvStore invStore,
         ILogger<PriceFetcher> logger)
     {
         _priceService = priceService;
@@ -75,11 +75,11 @@ public class PriceFetcher : BackgroundService
             if (price < 10)
             {
                 exportLimit = Math.Min(exportLimit, (ushort)200);
-                await InvokeMethod(g => _communicator.SetExportLimit(exportLimit, g, stoppingToken));
+                await InvokeMethod(g => _communicator.SetExportLimit((ushort)exportLimit, g, stoppingToken));
             }
             else if (exportLimitDef.HasValue)
             {
-                await InvokeMethod(g => _communicator.SetExportLimit(exportLimit, g, stoppingToken));
+                await InvokeMethod(g => _communicator.SetExportLimit((ushort)exportLimit, g, stoppingToken));
             }
             else
             {
@@ -89,7 +89,7 @@ public class PriceFetcher : BackgroundService
             if ((price < -10 && pvForecast < 100)
                 || (_priceService.IsMinPriceOfNight() && !_forecastService.PossibleFulfillBattery()))
                 await InvokeMethod(g =>
-                    _communicator.ForceBatteryCharge(g, _gridOptions.CurrentValue.ChargePower, stoppingToken));
+                    _communicator.ForceBatteryCharge(g, (ushort)_gridOptions.CurrentValue.ChargePower, stoppingToken));
             else
                 await InvokeMethod(g => _communicator.StopForceBatteryCharge(g, stoppingToken));
         }

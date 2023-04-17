@@ -284,7 +284,7 @@ public class GoodWeCom
                     Array.Copy(response.Result.Buffer, startIndex, value, 0, 2);
                     var result = BitConverter.ToInt16(value.Reverse().ToArray());
                     result = FitLimits(result, point);
-                    _logger.LogInformation($"{point.Description}: {result}");
+                    _logger.LogTrace($"{point.Description}: {result}");
                     TraceGauge(definition, point.Group, point.Description, result);
                     var resultValue = new DataValue(point.Address, point.Group, point.Description, FitLimits(result, point));
                     foreach (var bitController in _bitControllers)

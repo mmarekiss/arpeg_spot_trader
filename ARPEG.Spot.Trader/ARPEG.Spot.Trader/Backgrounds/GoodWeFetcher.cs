@@ -16,13 +16,13 @@ public class GoodWeFetcher : BackgroundService
 {
     private readonly GoodWeFinder _finder;
     private readonly IOptionsMonitor<GoodWe> _goodWeConfig;
-    private readonly GoodWeInvStore _invStore;
+    private readonly IGoodWeInvStore _invStore;
     private readonly ILogger<GoodWeFetcher> _logger;
     private readonly IServiceProvider _serviceProvider;
 
     public GoodWeFetcher(GoodWeFinder finder,
         IOptionsMonitor<GoodWe> goodWeConfig,
-        GoodWeInvStore invStore,
+        IGoodWeInvStore invStore,
         ILogger<GoodWeFetcher> logger,
         IServiceProvider serviceProvider)
     {

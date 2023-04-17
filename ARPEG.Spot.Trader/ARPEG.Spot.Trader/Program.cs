@@ -3,9 +3,6 @@
 using System.Globalization;
 using ARPEG.Spot.Trader;
 using ARPEG.Spot.Trader.Constants;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 
 CultureInfo.CurrentCulture = new CultureInfo("cs");
 CultureInfo.CurrentUICulture = new CultureInfo("cs");
@@ -19,7 +16,6 @@ builder.Configuration
 builder.Logging.AddConfiguration(builder.Configuration);
 
 builder.Services.AddServices(builder.Configuration);
-
 
 try
 {
