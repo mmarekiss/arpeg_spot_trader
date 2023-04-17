@@ -27,7 +27,7 @@ jobs:
       if: success()      
       id: prepare      
       run: |        
-        echo "docker_platform=linux/arm/v7" >> $GITHUB_ENV 
+        echo "docker_platform=linux/arm64" >> $GITHUB_ENV 
     - name: Build the Docker image
       run: |
         cd ARPEG.Spot.Trader
