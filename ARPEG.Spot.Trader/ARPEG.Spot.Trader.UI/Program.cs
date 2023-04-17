@@ -1,5 +1,9 @@
+using System.Globalization;
 using ARPEG.Spot.Trader;
 using ARPEG.Spot.Trader.Constants;
+
+CultureInfo.CurrentCulture = new CultureInfo("cs");
+CultureInfo.CurrentUICulture = new CultureInfo("cs");
 
 var builder = WebApplication.CreateBuilder(args);
 
