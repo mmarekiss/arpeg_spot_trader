@@ -9,5 +9,4 @@
     <ItemGroup>
       <ProjectReference Include="..\ARPEG.Spot.Trader\ARPEG.Spot.Trader.csproj" />
     </ItemGroup>
-
 </Project>
