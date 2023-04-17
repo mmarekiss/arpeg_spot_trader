@@ -17,12 +17,21 @@ jobs:
       with:
         username: marekiss
         password: 11121988
+    - name: Set up Docker Buildx      
+      uses: crazy-max/ghaction-docker-buildx@v1      
+      with:        
+        version: latest     
     - name: set env
       run: echo "tagversion=$(date +'%Y.%m.%d')" >> $GITHUB_ENV
+    - name: Prepare      
+      if: success()      
+      id: prepare      
+      run: |        
+        echo ::set-output name=docker_platform::linux/arm/v7  
     - name: Build the Docker image
       run: |
         cd ARPEG.Spot.Trader
-        docker build . --file Dockerfile --tag marekiss/arpeg_trader:${{ env.tagversion }}
+        docker buildx build . --file Dockerfile --tag marekiss/arpeg_trader:${{ env.tagversion }}
     - name: add tag latest
       run: docker tag marekiss/arpeg_trader:${{ env.tagversion }} marekiss/arpeg_trader:latest
     - name: Publish docker image
