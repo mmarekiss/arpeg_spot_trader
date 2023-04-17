@@ -17,7 +17,7 @@ RUN dotnet publish  /source/ARPEG.Spot.Trader.UI -c release --no-restore -o /app
 FROM mcr.microsoft.com/dotnet/aspnet:6.0
 WORKDIR /app
 COPY --from=build /app ./
-ENV ASPNETCORE_URLS=http://localhost:5001
+ENV ASPNETCORE_URLS=http://+:9876
 ENV ASPNET_ENVIRONMENT=Production
 ENV TZ=Europe/Prague
 ENTRYPOINT ["dotnet", "ARPEG.Spot.Trader.UI.dll"]
