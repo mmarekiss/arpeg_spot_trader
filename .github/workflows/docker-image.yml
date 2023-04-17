@@ -31,7 +31,7 @@ jobs:
     - name: Build the Docker image
       run: |
         cd ARPEG.Spot.Trader
-        docker buildx build . --file Dockerfile --platform linux/arm/v7 ---tag marekiss/arpeg_trader:${{ env.tagversion }} --output type=image
+        docker buildx build . --file Dockerfile --platform linux/arm/v7 --tag marekiss/arpeg_trader:${{ env.tagversion }} --output type=image
     - name: add tag latest
       run: docker tag marekiss/arpeg_trader:${{ env.tagversion }} marekiss/arpeg_trader:latest
     - name: Publish docker image
