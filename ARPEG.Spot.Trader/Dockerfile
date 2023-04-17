@@ -4,7 +4,7 @@ WORKDIR /source
 
 # copy everything else and build app
 COPY ./ /source/
-RUN dotnet publish -c release -o /app 
+RUN dotnet publish -c release 
 
 # final stage/image
 FROM mcr.microsoft.com/dotnet/aspnet:7.0
