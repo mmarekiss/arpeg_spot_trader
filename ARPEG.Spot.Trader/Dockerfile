@@ -7,8 +7,8 @@ COPY ./ARPEG.Spot.Trader/ /source/ARPEG.Spot.Trader/
 COPY ./ARPEG.Spot.Trader.Integration/ /source/ARPEG.Spot.Trader.Integration/ 
 COPY ./ARPEG.Spot.Trader.UI/ /source/ARPEG.Spot.Trader.UI/
 
-RUN dotnet restore /source/ARPEG.Spot.Trader
 RUN dotnet restore /source/ARPEG.Spot.Trader.Integration
+RUN dotnet restore /source/ARPEG.Spot.Trader
 RUN dotnet restore /source/ARPEG.Spot.Trader.UI
 
 RUN dotnet publish  /source/ARPEG.Spot.Trader.UI -c release --no-restore -o /app
