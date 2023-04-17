@@ -4,25 +4,25 @@ namespace ARPEG.Spot.Trader.Config;
 
 public class Root
 {
-    public required GoodWe GoodWe { get; init; }
+    public GoodWe GoodWe { get; init; } = new();
 
-    public required Grid Grid { get; init; }
+    public Grid Grid { get; init; } = new();
 
-    public required PvForecast PvForecast { get; init; }
+    public PvForecast PvForecast { get; init; } = new();
 
-    public required BitOutput1 BitOutput1 { get; init; }
+    public BitOutput1 BitOutput1 { get; init; } = new();
 
-    public required BitOutput1 BitOutput2 { get; init; }
+    public BitOutput1 BitOutput2 { get; init; } = new();
 
-    public required BitOutput1 BitOutput3 { get; init; }
+    public BitOutput1 BitOutput3 { get; init; } = new();
 
-    public required BitOutput1 BitOutput4 { get; init; }
+    public BitOutput1 BitOutput4 { get; init; } = new();
 
-    public required BitOutput1 BitOutput5 { get; init; }
+    public BitOutput1 BitOutput5 { get; init; } = new();
 
-    public required BitOutput1 BitOutput6 { get; init; }
+    public BitOutput1 BitOutput6 { get; init; } = new();
 
-    public required BitOutput1 BitOutput7 { get; init; }
+    public BitOutput1 BitOutput7 { get; init; } = new();
 
-    public required BitOutput1 BitOutput8 { get; init; }
+    public BitOutput1 BitOutput8 { get; init; } = new();
 }

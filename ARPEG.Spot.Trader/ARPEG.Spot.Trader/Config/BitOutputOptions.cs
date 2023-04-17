@@ -6,9 +6,9 @@ public abstract class BitOutputOptions
 {
     public abstract int Pin { get;  }
     
-    public required string GwSn { get; set; }
+    public string GwSn { get; set; } = string.Empty;
 
-    public required string DriverType { get; set; } 
+    public string DriverType { get; set; }= string.Empty; 
 
     public short TriggerValue { get; set; }
 

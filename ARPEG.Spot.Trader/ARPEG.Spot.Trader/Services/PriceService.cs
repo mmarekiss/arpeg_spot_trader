@@ -6,6 +6,8 @@ namespace ARPEG.Spot.Trader.Services;
 
 public class PriceService
 {
+
+    private static JsonSerializerOptions _jsonSerializerOptions = new JsonSerializerOptions();
     private readonly ILogger<PriceService> _logger;
 
     private readonly double[] _todayPrices = new double[24];
@@ -82,7 +84,7 @@ public class PriceService
         if (result.IsSuccessStatusCode)
         {
             var pricesDefinition =
-                await result.Content.ReadFromJsonAsync<OtePrices>(JsonSerializerOptions.Default, cancellationToken);
+                await result.Content.ReadFromJsonAsync<OtePrices>(_jsonSerializerOptions, cancellationToken);
             var priceArray = pricesDefinition?.data.dataLine.FirstOrDefault(x => x.type == "1");
 
             for (var i = 0; priceArray?.point?.Length > 1 && i < 24; i++)

@@ -1,42 +1,44 @@
 ﻿@using ARPEG.Spot.Trader.Config
 @namespace ARPEG.Spot.Trader.UI.Components
 
-<div class="card">
-            <div class="card-body">
-                <label>Logika</label>
-                <InputSelect @bind-Value="BitOutput.DriverType">
-                    @foreach (var handler in BitHandlers)
-                    {
-                        <option value="@handler">@handler</option>
-                    }
-                </InputSelect>
+@if (BitOutput != null && BitHandlers is not null && GoodWees is not null)
+{
+    <div class="card">
+        <div class="card-body">
+            <label>Logika</label>
+            <InputSelect @bind-Value="BitOutput.DriverType">
+                @foreach (var handler in BitHandlers)
+                {
+                    <option value="@handler">@handler</option>
+                }
+            </InputSelect>
 
-                <label>GW</label>
-                <InputSelect @bind-Value="BitOutput.GwSn">
-                    @foreach (var sn in GoodWees)
-                    {
-                        <option value="@sn">@sn</option>
-                    }
-                </InputSelect>
+            <label>GW</label>
+            <InputSelect @bind-Value="BitOutput.GwSn">
+                @foreach (var sn in GoodWees)
+                {
+                    <option value="@sn">@sn</option>
+                }
+            </InputSelect>
 
-                <label>Hodnota je </label>
-                <InputSelect @bind-Value="BitOutput.GreaterThen">
-                    <option value="true">větší než</option>
-                    <option value="false">menší než</option>
-                </InputSelect>
-                <InputNumber @bind-Value="BitOutput.TriggerValue"></InputNumber>
-            </div>
+            <label>Hodnota je </label>
+            <InputSelect @bind-Value="BitOutput.GreaterThen">
+                <option value="true">větší než</option>
+                <option value="false">menší než</option>
+            </InputSelect>
+            <InputNumber @bind-Value="BitOutput.TriggerValue"></InputNumber>
         </div>
-
+    </div>
+}
 @code {
 
-    [Parameter]
-    public required BitOutputOptions BitOutput { get; set; } 
+    [Parameter, EditorRequired]
+    public BitOutputOptions BitOutput { get; set; } = null!;
 
-    [Parameter]
-    public required IEnumerable<string> GoodWees { get; set; }
+    [Parameter, EditorRequired]
+    public IEnumerable<string> GoodWees { get; set; }= null!;
 
-    [Parameter]
-    public required IEnumerable<string> BitHandlers { get; set; }
+    [Parameter, EditorRequired]
+    public IEnumerable<string> BitHandlers { get; set; }= null!;
 
 }

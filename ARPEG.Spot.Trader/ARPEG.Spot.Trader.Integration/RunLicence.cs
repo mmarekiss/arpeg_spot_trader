@@ -9,6 +9,6 @@ public enum LicenceVersion
 
 public class RunLicence
 {
-    public required string SerialNumber { get; init; }
-    public required LicenceVersion LicenceVersion { get; init; }
+    public string SerialNumber { get; init; } = string.Empty;
+    public LicenceVersion LicenceVersion { get; init; }
 }

@@ -9,18 +9,18 @@ namespace ARPEG.Spot.Trader.UI.Pages;
 public partial class Index
 {
     [Inject]
-    public required IGoodWeInvStore GwStore { get; init; }
+    public IGoodWeInvStore GwStore { get; init; } = null!;
 
     [Inject]
-    public required  IConfigUpdater  ConfigUpdater { get; init; }
+    public  IConfigUpdater  ConfigUpdater { get; init; } = null!;
 
     [Inject]
-    public required  IEnumerable<IDataValueHandler> BitHandlers { get; init; }
+    public  IEnumerable<IDataValueHandler> BitHandlers { get; init; } = null!;
     private Root? Configuration { get; set; } 
     
     protected override Task OnInitializedAsync()
     {
-        Configuration = ConfigUpdater.GetCurrent();
+        Configuration = ConfigUpdater?.GetCurrent();
         return base.OnInitializedAsync();
     }
 
