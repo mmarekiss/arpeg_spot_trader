@@ -1,0 +1,35 @@
+﻿@page "/"
+
+<PageTitle>ARPEG spot trader</PageTitle>
+
+<h1>ARPEG spot trader</h1>
+
+@if (Configuration is not null)
+{
+    <EditForm Model="@Configuration" OnValidSubmit="Save">
+        <div class="card">
+            <div class="card-body">
+                <label>Obchodovat na burze</label>
+                <InputCheckbox @bind-Value="Configuration.Grid.TradeEnergy"></InputCheckbox>
+
+                <label>Nabíjecí výkon</label>
+                <InputNumber @bind-Value="Configuration.Grid.ChargePower"></InputNumber>
+
+                <label>Export limit</label>
+                <InputNumber @bind-Value="Configuration.Grid.ExportLimit"></InputNumber>
+            </div>
+        </div>
+        
+        <BitSetter BitOutput=Configuration.BitOutput1 BitHandlers="BitHandlers.Select(x => x.Type)" GoodWees="GwStore.GoodWes.Select(x => x.SN)"/>
+        <BitSetter BitOutput=Configuration.BitOutput2 BitHandlers="BitHandlers.Select(x => x.Type)" GoodWees="GwStore.GoodWes.Select(x => x.SN)"/>
+        <BitSetter BitOutput=Configuration.BitOutput3 BitHandlers="BitHandlers.Select(x => x.Type)" GoodWees="GwStore.GoodWes.Select(x => x.SN)"/>
+        <BitSetter BitOutput=Configuration.BitOutput4 BitHandlers="BitHandlers.Select(x => x.Type)" GoodWees="GwStore.GoodWes.Select(x => x.SN)"/>
+        <BitSetter BitOutput=Configuration.BitOutput5 BitHandlers="BitHandlers.Select(x => x.Type)" GoodWees="GwStore.GoodWes.Select(x => x.SN)"/>
+        <BitSetter BitOutput=Configuration.BitOutput6 BitHandlers="BitHandlers.Select(x => x.Type)" GoodWees="GwStore.GoodWes.Select(x => x.SN)"/>
+        <BitSetter BitOutput=Configuration.BitOutput7 BitHandlers="BitHandlers.Select(x => x.Type)" GoodWees="GwStore.GoodWes.Select(x => x.SN)"/>
+        <BitSetter BitOutput=Configuration.BitOutput8 BitHandlers="BitHandlers.Select(x => x.Type)" GoodWees="GwStore.GoodWes.Select(x => x.SN)"/>
+        
+        <button type="submit">Uložit</button>
+
+    </EditForm>
+}
