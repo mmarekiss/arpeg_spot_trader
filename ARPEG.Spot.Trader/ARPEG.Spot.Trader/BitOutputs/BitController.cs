@@ -37,7 +37,7 @@ public class BitController<TOptions> : IBitController
         if (!value.HasValue) return Task.CompletedTask;
         
         _gauge.WithLabels(opt.Pin.ToString()).Set(value.Value ? 1 : 0);
-        _logger.LogInformation("Set output for pin {pinId} {value}", opt.Pin, value);
+        _logger.LogTrace("Set output for pin {pinId} {value}", opt.Pin, value);
 
         return Task.CompletedTask;
     }
