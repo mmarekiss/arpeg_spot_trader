@@ -36,21 +36,20 @@ public class BitController<TOptions> : IBitController
     public Task HandleDataValue(Definition inverterDefinition,
         DataValue dataValue)
     {
-        var opt = Options;
-        if (inverterDefinition.SN != opt.GwSn) return Task.CompletedTask;
+        if (inverterDefinition.SN != Options.GwSn) return Task.CompletedTask;
         
-        var handler = _handlers.FirstOrDefault(x => x.Type == opt.DriverType);
+        var handler = _handlers.FirstOrDefault(x => x.Type == Options.DriverType);
 
-        var value = handler?.Handle(dataValue, opt.GreaterThen, opt.TriggerValue);
+        var value = handler?.Handle(dataValue, Options.GreaterThen, Options.TriggerValue);
         if (!value.HasValue) return Task.CompletedTask;
         
-        _gauge.WithLabels(opt.Pin.ToString()).Set(value.Value ? 1 : 0);
-        _logger.LogTrace("Set output for pin {pinId} {value}", opt.Pin, value);
+        _gauge.WithLabels(Options.Pin.ToString()).Set(value.Value ? 1 : 0);
+        _logger.LogTrace("Set output for pin {pinId} {value}", Options.Pin, value);
 
 #if !DEBUG
         using var controller = new GpioController();
-        controller.OpenPin(_optionsMonitor.CurrentValue.Pin, PinMode.Output);
-        controller.Write(opt.Pin, value.Value);
+        controller.OpenPin(Options.Pin, PinMode.Output);
+        controller.Write(Options.Pin, value.Value);
 #endif  
         
         return Task.CompletedTask;
