@@ -42,6 +42,7 @@ public class GoodWeFetcher : BackgroundService
         await foreach (var goodWee in _finder.FindGoodWees(addressess)
                            .WithCancellation(stoppingToken))
         {
+            _logger.LogInformation("Found GoodWe at {Ip}", goodWee.address);
             await RunTrader(goodWee.SN, goodWee.address, stoppingToken);
         }
     }
