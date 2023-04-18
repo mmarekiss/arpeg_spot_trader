@@ -1,5 +1,4 @@
 ﻿using System.Net;
-using System.Net.NetworkInformation;
 using Microsoft.Extensions.Logging;
 using TecoBridge.GoodWe;
 
@@ -17,7 +16,21 @@ public class GoodWeFinder
         _logger = logger;
     }
 
-    public async IAsyncEnumerable<(string SN, IPAddress address)> FindGoodWees(params (IPAddress address, IPAddress mask)[] ips)
+    public async Task<(string SN, IPAddress address)> GetGoodWe(IPAddress address,
+        CancellationToken cancellationToken)
+    {
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            var sn = await _goodWe.GetInverterName(address);
+            if (!string.IsNullOrWhiteSpace(sn))
+                return (sn, address);
+        }
+
+        return ("", IPAddress.None);
+    }
+
+    public async IAsyncEnumerable<(string SN, IPAddress address)> FindGoodWees(
+        params (IPAddress address, IPAddress mask)[] ips)
     {
         var result = new List<(string SN, IPAddress address)>();
         var findTasks = new List<Task>();
@@ -27,7 +40,6 @@ public class GoodWeFinder
                 findTasks.Add(Task.Run(async () =>
                 {
                     foreach (var ip in chunk)
-                    {
                         try
                         {
                             var sn = await _goodWe.GetInverterName(ip);
@@ -41,7 +53,6 @@ public class GoodWeFinder
                         {
                             _logger.LogInformation($"{ip} is not GoodWe");
                         }
-                    }
                 }));
             await Task.WhenAll(findTasks.ToArray());
             foreach (var r in result) yield return r;

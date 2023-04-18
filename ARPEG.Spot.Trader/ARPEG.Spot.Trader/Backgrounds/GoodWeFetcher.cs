@@ -35,15 +35,20 @@ public class GoodWeFetcher : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var addressess = IPAddress.TryParse(_goodWeConfig.CurrentValue.Ip, out var ipAddress) 
-            ? new [] { (ipAddress, IPAddress.Parse("255.255.255.255"))}  
-            : IpFetcher.GetAddressess(_logger).ToArray();
-        
-        await foreach (var goodWee in _finder.FindGoodWees(addressess)
-                           .WithCancellation(stoppingToken))
+        if (IPAddress.TryParse(_goodWeConfig.CurrentValue.Ip, out var ipAddress))
         {
-            _logger.LogInformation("Found GoodWe at {Ip}", goodWee.address);
+            var goodWee = await _finder.GetGoodWe(ipAddress, stoppingToken);
             await RunTrader(goodWee.SN, goodWee.address, stoppingToken);
+        }
+        else
+        {
+            var addresses = IpFetcher.GetAddressess(_logger).ToArray();
+            await foreach (var goodWee in _finder.FindGoodWees(addresses)
+                               .WithCancellation(stoppingToken))
+            {
+                _logger.LogInformation("Found GoodWe at {Ip}", goodWee.address);
+                await RunTrader(goodWee.SN, goodWee.address, stoppingToken);
+            }
         }
     }
 

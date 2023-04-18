@@ -1,4 +1,5 @@
-﻿using ARPEG.Spot.Trader.BitOutputs.Handlers;
+﻿using System.Device.Gpio;
+using ARPEG.Spot.Trader.BitOutputs.Handlers;
 using ARPEG.Spot.Trader.Config;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -13,22 +14,29 @@ public class BitController<TOptions> : IBitController
     private readonly Gauge _gauge;
     private readonly IEnumerable<IDataValueHandler> _handlers;
     private readonly ILogger<BitController<TOptions>> _logger;
-    private readonly IOptionsMonitor<TOptions> _optionsMonitor;
+
+    private TOptions Options { get; set; }
 
     public BitController(ILogger<BitController<TOptions>> logger,
         IOptionsMonitor<TOptions> optionsMonitor,
         IEnumerable<IDataValueHandler> handlers)
     {
         _logger = logger;
-        _optionsMonitor = optionsMonitor;
+        Options = optionsMonitor.CurrentValue;
+        optionsMonitor.OnChange(Listener); 
         _handlers = handlers;
         _gauge = Metrics.CreateGauge("Outputs", "Digital outputs", "output");
+    }
+
+    private void Listener(TOptions opt, string arg2)
+    {
+        Options = opt;
     }
 
     public Task HandleDataValue(Definition inverterDefinition,
         DataValue dataValue)
     {
-        var opt = _optionsMonitor.CurrentValue;
+        var opt = Options;
         if (inverterDefinition.SN != opt.GwSn) return Task.CompletedTask;
         
         var handler = _handlers.FirstOrDefault(x => x.Type == opt.DriverType);
@@ -39,6 +47,12 @@ public class BitController<TOptions> : IBitController
         _gauge.WithLabels(opt.Pin.ToString()).Set(value.Value ? 1 : 0);
         _logger.LogTrace("Set output for pin {pinId} {value}", opt.Pin, value);
 
+#if !DEBUG
+        using var controller = new GpioController();
+        controller.OpenPin(_optionsMonitor.CurrentValue.Pin, PinMode.Output);
+        controller.Write(opt.Pin, value.Value);
+#endif  
+        
         return Task.CompletedTask;
     }
 }

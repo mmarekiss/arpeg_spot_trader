@@ -15,7 +15,9 @@ public class PriceFetcher : BackgroundService
     private readonly ForecastService _forecastService;
     private readonly Gauge _gauge;
     private readonly Gauge _gaugePvForecast;
-    private readonly IOptionsMonitor<Grid> _gridOptions;
+
+    private Grid GridOptions { get; set; }
+
     private readonly IGoodWeInvStore _invStore;
     private readonly ILogger<PriceFetcher> _logger;
     private readonly PriceService _priceService;
@@ -30,12 +32,19 @@ public class PriceFetcher : BackgroundService
         _priceService = priceService;
         _communicator = communicator;
         _forecastService = forecastService;
-        _gridOptions = gridOptions;
+        GridOptions = gridOptions.CurrentValue;
+        gridOptions.OnChange(Listener);
         _invStore = invStore;
         _logger = logger;
 
         _gauge = Metrics.CreateGauge("Price", "Current price from OTE");
         _gaugePvForecast = Metrics.CreateGauge("PV_forecast", "Solar forecast", "part");
+    }
+
+    private void Listener(Grid opt,
+        string arg2)
+    {
+        GridOptions = opt;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -67,9 +76,9 @@ public class PriceFetcher : BackgroundService
         _gaugePvForecast.WithLabels("now").Set(pvForecast);
         _gaugePvForecast.WithLabels("24").Set(pForecast24);
 
-        if (_gridOptions.CurrentValue.TradeEnergy)
+        if (GridOptions.TradeEnergy)
         {
-            var exportLimitDef = _gridOptions.CurrentValue.ExportLimit;
+            var exportLimitDef = GridOptions.ExportLimit;
             var exportLimit = exportLimitDef ?? 10_000;
 
             if (price < 10)
@@ -89,7 +98,7 @@ public class PriceFetcher : BackgroundService
             if ((price < -10 && pvForecast < 100)
                 || (_priceService.IsMinPriceOfNight() && !_forecastService.PossibleFulfillBattery()))
                 await InvokeMethod(g =>
-                    _communicator.ForceBatteryCharge(g, (ushort)_gridOptions.CurrentValue.ChargePower, stoppingToken));
+                    _communicator.ForceBatteryCharge(g, (ushort)GridOptions.ChargePower, stoppingToken));
             else
                 await InvokeMethod(g => _communicator.StopForceBatteryCharge(g, stoppingToken));
         }

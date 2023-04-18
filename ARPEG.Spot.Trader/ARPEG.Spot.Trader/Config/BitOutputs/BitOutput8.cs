@@ -2,5 +2,5 @@
 
 public class BitOutput8 : BitOutputOptions
 {
-    public override int Pin => 8;
+    public override int Pin => 54;
 }
