@@ -48,7 +48,7 @@ public class BitController<TOptions> : IBitController, IDisposable
         _logger.LogTrace("Set output for pin {pinId} {value}", _options.Pin, value);
 
 #if !DEBUG
-        _controller.Write(Options.Pin, !value.Value);
+        _controller.Write(_options.Pin, !value.Value);
 #endif  
         
         return Task.CompletedTask;
