@@ -27,7 +27,7 @@ public class BitController<TOptions> : IBitController, IDisposable
         _logger = logger;
         _options = options;
         _handlers = handlers;
-        _gauge = Metrics.CreateGauge("Outputs", "Digital outputs", "output");
+        _gauge = Metrics.CreateGauge("Outputs", "Digital outputs", "output", "description");
 #if !DEBUG
         _controller = new GpioController();
         _controller.OpenPin(Options.Pin, PinMode.Output);
@@ -43,8 +43,10 @@ public class BitController<TOptions> : IBitController, IDisposable
 
         var value = handler?.Handle(dataValue, _options.GreaterThen, _options.TriggerValue);
         if (!value.HasValue) return Task.CompletedTask;
+
+        var description = CreateDescription(_options);
         
-        _gauge.WithLabels(_options.Pin.ToString()).Set(value.Value ? 1 : 0);
+        _gauge.WithLabels(_options.Pin.ToString(), description).Set(value.Value ? 1 : 0);
         _logger.LogTrace("Set output for pin {pinId} {value}", _options.Pin, value);
 
 #if !DEBUG
@@ -52,6 +54,12 @@ public class BitController<TOptions> : IBitController, IDisposable
 #endif  
         
         return Task.CompletedTask;
+    }
+
+    private string CreateDescription(TOptions options)
+    {
+        var mark = _options.GreaterThen ? ">" : "<";
+        return $"{_options.DriverType} {mark} { _options.TriggerValue}";
     }
 
     public void Dispose()
