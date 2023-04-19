@@ -21,10 +21,10 @@ public class PvPowerDataValueHandler : IDataValueHandler
     {
         if (value is { group: DataGroupNames.PV, part: PVGroupParts.Wats })
         {
-            if (options.GreaterThen == (value.value > options.TriggerValue))
-                return true;
             if (options.GreaterThenOff == (value.value > options.TriggerValueOff))
                 return false;
+            if (options.GreaterThen == (value.value > options.TriggerValue))
+                return true;
         }
 
         return null;

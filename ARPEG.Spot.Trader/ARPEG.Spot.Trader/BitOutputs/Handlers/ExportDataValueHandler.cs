@@ -21,10 +21,10 @@ public class ExportDataValueHandler : IDataValueHandler
     {
         if (value is { group: DataGroupNames.Grid, part: GridGroupParts.Total })
         {
-            if (options.GreaterThen == (value.value > options.TriggerValue))
-                return true;
             if (options.GreaterThenOff == (value.value > options.TriggerValueOff))
                 return false;
+            if (options.GreaterThen == (value.value > options.TriggerValue))
+                return true;
         }
 
         return null;
