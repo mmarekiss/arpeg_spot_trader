@@ -10,6 +10,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Configuration
     .AddJsonFile(AppSettings.UserAppSettingsFile, optional:true, reloadOnChange: true);
 
+builder.Services.AddOptions();
 // Add services to the container.
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();

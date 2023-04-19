@@ -14,19 +14,18 @@ public class BitController<TOptions> : IBitController, IDisposable
     private readonly Gauge _gauge;
     private readonly IEnumerable<IDataValueHandler> _handlers;
     private readonly ILogger<BitController<TOptions>> _logger;
+    private readonly TOptions _options;
 #if !DEBUG
     private readonly GpioController _controller;
 #endif
 
-    private TOptions Options { get; set; }
 
     public BitController(ILogger<BitController<TOptions>> logger,
-        IOptionsMonitor<TOptions> optionsMonitor,
+        TOptions options,
         IEnumerable<IDataValueHandler> handlers)
     {
         _logger = logger;
-        Options = optionsMonitor.CurrentValue;
-        optionsMonitor.OnChange(Listener); 
+        _options = options;
         _handlers = handlers;
         _gauge = Metrics.CreateGauge("Outputs", "Digital outputs", "output");
 #if !DEBUG
@@ -35,23 +34,18 @@ public class BitController<TOptions> : IBitController, IDisposable
 #endif
     }
 
-    private void Listener(TOptions opt, string arg2)
-    {
-        Options = opt;
-    }
-
     public Task HandleDataValue(Definition inverterDefinition,
         DataValue dataValue)
     {
-        if (inverterDefinition.SN != Options.GwSn) return Task.CompletedTask;
+        if (inverterDefinition.SN != _options.GwSn) return Task.CompletedTask;
         
-        var handler = _handlers.FirstOrDefault(x => x.Type == Options.DriverType);
+        var handler = _handlers.FirstOrDefault(x => x.Type == _options.DriverType);
 
-        var value = handler?.Handle(dataValue, Options.GreaterThen, Options.TriggerValue);
+        var value = handler?.Handle(dataValue, _options.GreaterThen, _options.TriggerValue);
         if (!value.HasValue) return Task.CompletedTask;
         
-        _gauge.WithLabels(Options.Pin.ToString()).Set(value.Value ? 1 : 0);
-        _logger.LogTrace("Set output for pin {pinId} {value}", Options.Pin, value);
+        _gauge.WithLabels(_options.Pin.ToString()).Set(value.Value ? 1 : 0);
+        _logger.LogTrace("Set output for pin {pinId} {value}", _options.Pin, value);
 
 #if !DEBUG
         _controller.Write(Options.Pin, !value.Value);

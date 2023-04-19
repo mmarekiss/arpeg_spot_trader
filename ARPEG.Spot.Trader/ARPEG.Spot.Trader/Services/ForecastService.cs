@@ -10,12 +10,12 @@ public class ForecastService
     private readonly int[] _forecastForToday = new int[24];
     private readonly int[] _forecastForTommorow = new int[24];
     private readonly ILogger<ForecastService> _logger;
-    private readonly IOptionsMonitor<PvForecast> _pvForecast;
+    private readonly IOptions<PvForecast> _pvForecast;
 
     private DateTime ForecastDay = DateTime.MinValue;
 
     public ForecastService(ILogger<ForecastService> logger,
-        IOptionsMonitor<PvForecast> pvForecast)
+        IOptions<PvForecast> pvForecast)
     {
         _logger = logger;
         _pvForecast = pvForecast;
@@ -84,6 +84,6 @@ public class ForecastService
 
     private bool PossibleFulfillBattery(int[] forecast)
     {
-        return forecast.Sum() < _pvForecast.CurrentValue.MinSumPVForCharge;
+        return forecast.Sum() < _pvForecast.Value.MinSumPVForCharge;
     }
 }

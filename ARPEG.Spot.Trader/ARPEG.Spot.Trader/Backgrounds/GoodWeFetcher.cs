@@ -15,13 +15,13 @@ namespace ARPEG.Spot.Trader.Backgrounds;
 public class GoodWeFetcher : BackgroundService
 {
     private readonly GoodWeFinder _finder;
-    private readonly IOptionsMonitor<GoodWe> _goodWeConfig;
+    private readonly IOptions<GoodWe> _goodWeConfig;
     private readonly IGoodWeInvStore _invStore;
     private readonly ILogger<GoodWeFetcher> _logger;
     private readonly IServiceProvider _serviceProvider;
 
     public GoodWeFetcher(GoodWeFinder finder,
-        IOptionsMonitor<GoodWe> goodWeConfig,
+        IOptions<GoodWe> goodWeConfig,
         IGoodWeInvStore invStore,
         ILogger<GoodWeFetcher> logger,
         IServiceProvider serviceProvider)
@@ -35,7 +35,7 @@ public class GoodWeFetcher : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        if (IPAddress.TryParse(_goodWeConfig.CurrentValue.Ip, out var ipAddress))
+        if (IPAddress.TryParse(_goodWeConfig.Value.Ip, out var ipAddress))
         {
             var goodWee = await _finder.GetGoodWe(ipAddress, stoppingToken);
             await RunTrader(goodWee.SN, goodWee.address, stoppingToken);

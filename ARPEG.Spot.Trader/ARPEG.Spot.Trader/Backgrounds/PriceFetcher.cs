@@ -3,7 +3,6 @@ using ARPEG.Spot.Trader.Services;
 using ARPEG.Spot.Trader.Store;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Prometheus;
 using TecoBridge.GoodWe;
 
@@ -25,26 +24,19 @@ public class PriceFetcher : BackgroundService
     public PriceFetcher(PriceService priceService,
         GoodWeCom communicator,
         ForecastService forecastService,
-        IOptionsMonitor<Grid> gridOptions,
+        Grid options,
         IGoodWeInvStore invStore,
         ILogger<PriceFetcher> logger)
     {
         _priceService = priceService;
         _communicator = communicator;
         _forecastService = forecastService;
-        GridOptions = gridOptions.CurrentValue;
-        gridOptions.OnChange(Listener);
+        GridOptions = options;
         _invStore = invStore;
         _logger = logger;
 
         _gauge = Metrics.CreateGauge("Price", "Current price from OTE");
         _gaugePvForecast = Metrics.CreateGauge("PV_forecast", "Solar forecast", "part");
-    }
-
-    private void Listener(Grid opt,
-        string arg2)
-    {
-        GridOptions = opt;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
