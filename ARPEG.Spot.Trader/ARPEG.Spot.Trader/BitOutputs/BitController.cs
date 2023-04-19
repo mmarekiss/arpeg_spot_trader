@@ -45,7 +45,7 @@ public class BitController<TOptions> : IBitController, IDisposable
         if (!value.HasValue) return Task.CompletedTask;
 
         var description = CreateDescription(_options);
-        foreach (var lbl in _gauge.GetAllLabelValues().Where(x=>x[1] != description)) //Remove old descriptions
+        foreach (var lbl in _gauge.GetAllLabelValues().Where(x=> x[0] == _options.Pin.ToString() && x[1] != description)) //Remove old descriptions
         {
             _gauge.RemoveLabelled(lbl);
         } 
