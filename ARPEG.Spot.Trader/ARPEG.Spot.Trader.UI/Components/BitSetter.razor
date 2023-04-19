@@ -21,18 +21,22 @@
                 }
             </InputSelect>
 
-            <label>Zapni když je hodnota </label>
+            <label>Zapni když je </label>
             <InputSelect @bind-Value="BitOutput.GreaterThen">
                 <option value="true">větší než</option>
                 <option value="false">menší než</option>
             </InputSelect>
             <InputNumber @bind-Value="BitOutput.TriggerValue"></InputNumber>
 
-            <label>a vypni když je hodnota </label>
-            <InputSelect @bind-Value="BitOutput.GreaterThenOff">
-                <option value="true">větší než</option>
-                <option value="false">menší než</option>
-            </InputSelect>
+            <label>a vypni když je </label>
+            @if (BitOutput.GreaterThen)
+            {
+                <text>menší než</text>
+            }
+            else
+            {
+                <text>větší než</text>
+            }
             <InputNumber @bind-Value="BitOutput.TriggerValueOff"></InputNumber>
         </div>
     </div>

@@ -21,7 +21,7 @@ public class SocDataValueHandler : IDataValueHandler
     {
         if(value is { group: DataGroupNames.Battery, part: BatteryGroupParts.SOC })
         {
-            if (options.GreaterThenOff == (value.value > options.TriggerValueOff))
+            if (options.GreaterThen == (value.value < options.TriggerValueOff))
                 return false;
             if (options.GreaterThen == (value.value > options.TriggerValue))
                 return true;
