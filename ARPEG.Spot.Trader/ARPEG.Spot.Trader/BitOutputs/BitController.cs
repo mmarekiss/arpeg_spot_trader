@@ -30,7 +30,7 @@ public class BitController<TOptions> : IBitController, IDisposable
         _gauge = Metrics.CreateGauge("Outputs", "Digital outputs", "output", "description");
 #if !DEBUG
         _controller = new GpioController();
-        _controller.OpenPin(Options.Pin, PinMode.Output);
+        _controller.OpenPin( _options.Pin, PinMode.Output);
 #endif
     }
 
