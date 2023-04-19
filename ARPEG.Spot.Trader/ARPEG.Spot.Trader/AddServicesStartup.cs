@@ -56,7 +56,7 @@ namespace ARPEG.Spot.Trader
         private static void RegisterBitController<TOptions>(this IServiceCollection services, IConfiguration configuration) where TOptions : BitOutputOptions
         {
             services.Configure<TOptions>(configuration.GetSection(typeof(TOptions).Name));
-            services.AddTransient<IBitController, BitController<TOptions>>();
+            services.AddSingleton<IBitController, BitController<TOptions>>();
         }
 
     }
