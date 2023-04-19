@@ -45,7 +45,10 @@ public class BitController<TOptions> : IBitController, IDisposable
         if (!value.HasValue) return Task.CompletedTask;
 
         var description = CreateDescription(_options);
-        
+        foreach (var lbl in _gauge.GetAllLabelValues().Where(x=>x[1] != description)) //Remove old descriptions
+        {
+            _gauge.RemoveLabelled(lbl);
+        } 
         _gauge.WithLabels(_options.Pin.ToString(), description).Set(value.Value ? 1 : 0);
         _logger.LogTrace("Set output for pin {pinId} {value}", _options.Pin, value);
 
