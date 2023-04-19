@@ -15,6 +15,7 @@ public class BitController<TOptions> : IBitController, IDisposable
     private readonly IEnumerable<IDataValueHandler> _handlers;
     private readonly ILogger<BitController<TOptions>> _logger;
     private readonly TOptions _options;
+
 #if !DEBUG
     private readonly GpioController _controller;
 #endif
@@ -41,7 +42,7 @@ public class BitController<TOptions> : IBitController, IDisposable
         
         var handler = _handlers.FirstOrDefault(x => x.Type == _options.DriverType);
 
-        var value = handler?.Handle(dataValue, _options.GreaterThen, _options.TriggerValue);
+        var value = handler?.Handle(dataValue, _options );
         if (!value.HasValue) return Task.CompletedTask;
 
         var description = CreateDescription(_options);

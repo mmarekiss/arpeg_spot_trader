@@ -13,4 +13,8 @@ public abstract class BitOutputOptions
     public short TriggerValue { get; set; }
 
     public bool GreaterThen { get; set; }
+    
+    public short TriggerValueOff { get; set; }
+
+    public bool GreaterThenOff { get; set; }
 }

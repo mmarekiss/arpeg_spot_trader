@@ -1,4 +1,5 @@
-﻿using ARPEG.Spot.Trader.Constants;
+﻿using ARPEG.Spot.Trader.Config;
+using ARPEG.Spot.Trader.Constants;
 using Microsoft.Extensions.Logging;
 using TecoBridge.GoodWe;
 
@@ -16,11 +17,16 @@ public class PvPowerDataValueHandler : IDataValueHandler
     public string Type => "PV_Power";
 
     public bool? Handle(DataValue value,
-        bool greater,
-        short limit)
+        BitOutputOptions options)
     {
-        if(value is { group: DataGroupNames.PV, part: PVGroupParts.Wats })
-                  return greater == (value.value > limit);
+        if (value is { group: DataGroupNames.PV, part: PVGroupParts.Wats })
+        {
+            if (options.GreaterThen == (value.value > options.TriggerValue))
+                return true;
+            if (options.GreaterThenOff == (value.value > options.TriggerValueOff))
+                return false;
+        }
+
         return null;
     }
 

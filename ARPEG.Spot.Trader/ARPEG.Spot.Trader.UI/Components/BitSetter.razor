@@ -21,24 +21,35 @@
                 }
             </InputSelect>
 
-            <label>Hodnota je </label>
+            <label>Zapni když je hodnota </label>
             <InputSelect @bind-Value="BitOutput.GreaterThen">
                 <option value="true">větší než</option>
                 <option value="false">menší než</option>
             </InputSelect>
             <InputNumber @bind-Value="BitOutput.TriggerValue"></InputNumber>
+
+            <label>a vypni když je hodnota </label>
+            <InputSelect @bind-Value="BitOutput.GreaterThenOff">
+                <option value="true">větší než</option>
+                <option value="false">menší než</option>
+            </InputSelect>
+            <InputNumber @bind-Value="BitOutput.TriggerValueOff"></InputNumber>
         </div>
     </div>
 }
+
 @code {
 
-    [Parameter, EditorRequired]
+    [Parameter]
+    [EditorRequired]
     public BitOutputOptions BitOutput { get; set; } = null!;
 
-    [Parameter, EditorRequired]
-    public IEnumerable<string> GoodWees { get; set; }= null!;
+    [Parameter]
+    [EditorRequired]
+    public IEnumerable<string> GoodWees { get; set; } = null!;
 
-    [Parameter, EditorRequired]
-    public IEnumerable<string> BitHandlers { get; set; }= null!;
+    [Parameter]
+    [EditorRequired]
+    public IEnumerable<string> BitHandlers { get; set; } = null!;
 
 }
