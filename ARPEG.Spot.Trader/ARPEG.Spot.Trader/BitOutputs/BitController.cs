@@ -43,16 +43,26 @@ public class BitController<TOptions> : IBitController, IDisposable
         var handler = _handlers.FirstOrDefault(x => x.Type == _options.DriverType);
 
         var value = handler?.Handle(dataValue, _options );
-        if (!value.HasValue) return Task.CompletedTask;
 
         var description = CreateDescription(_options);
         foreach (var lbl in _gauge.GetAllLabelValues().Where(x=> x[0] == _options.Pin.ToString() && x[1] != description)) //Remove old descriptions
         {
             _gauge.RemoveLabelled(lbl);
-        } 
+        }
+
+        if (!value.HasValue)
+        {
+            if (!_gauge.GetAllLabelValues().Any(x => x[0] == _options.Pin.ToString()))
+            {
+                _gauge.WithLabels(_options.Pin.ToString(), description).Set(0);
+            }
+
+            return Task.CompletedTask;
+        }
+
         _gauge.WithLabels(_options.Pin.ToString(), description).Set(value.Value ? 1 : 0);
         _logger.LogTrace("Set output for pin {pinId} {value}", _options.Pin, value);
-
+        
 #if !DEBUG
         _controller.Write(_options.Pin, !value.Value);
 #endif  
