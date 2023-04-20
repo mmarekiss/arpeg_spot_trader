@@ -48,6 +48,7 @@ public static class AddServicesStartup
         services.RegisterBitController<BitOutput8>(configuration);
 
         services.AddTransient<IDataValueHandler, SocDataValueHandler>();
+        services.AddTransient<IDataValueHandler, TemperatureValueHandler>();
         services.AddTransient<IDataValueHandler, PvPowerDataValueHandler>();
         services.AddTransient<IDataValueHandler, ExportDataValueHandler>();
 

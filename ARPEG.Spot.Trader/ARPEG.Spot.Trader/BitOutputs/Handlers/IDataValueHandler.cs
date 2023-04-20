@@ -7,6 +7,8 @@ public interface IDataValueHandler
 {
     string Type { get; }
 
+    string Unit { get; }
+
     bool? Handle(DataValue value,
         BitOutputOptions options);
 }

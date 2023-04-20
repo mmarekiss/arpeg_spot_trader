@@ -5,6 +5,12 @@ public static class DataGroupNames
     public const string Battery = nameof(Battery);
     public const string PV = nameof(PV);
     public const string Grid = nameof(Grid);
+    public const string Temperature = nameof(Temperature);
+}
+
+public static class TemperatureGroupParts
+{
+    public const string Temperature_Air = nameof(Temperature_Air);
 }
 
 public static class BatteryGroupParts

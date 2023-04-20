@@ -15,6 +15,8 @@ public class SocDataValueHandler : IDataValueHandler
     }
 
     public string Type => "SOC";
+    
+    public string Unit => "%";
 
     public bool? Handle(DataValue value,
         BitOutputOptions options)

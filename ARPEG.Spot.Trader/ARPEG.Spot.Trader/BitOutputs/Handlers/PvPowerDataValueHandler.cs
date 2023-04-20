@@ -15,6 +15,8 @@ public class PvPowerDataValueHandler : IDataValueHandler
     }
 
     public string Type => "PV_Power";
+    
+    public string Unit => "W";
 
     public bool? Handle(DataValue value,
         BitOutputOptions options)

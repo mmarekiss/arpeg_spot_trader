@@ -208,7 +208,7 @@ public class GoodWeCom
         }
         await GetInt16Values(
             definition,
-            new DataPoint("Temperature", "Temperature_Air", 35174, 0, 80),
+            new DataPoint(DataGroupNames.Temperature, TemperatureGroupParts.Temperature_Air, 35174, 0, 80),
             new DataPoint("Temperature", "Temperature_Radiator", 35176, 0, 80),
             new DataPoint("Temperature", "Temperature_Module", 35175, 0, 80)
         ).ToListAsync(cancellationToken);
