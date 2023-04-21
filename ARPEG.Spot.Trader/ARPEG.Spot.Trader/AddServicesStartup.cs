@@ -61,7 +61,7 @@ public static class AddServicesStartup
         services.AddSingleton<IConfigUpdater, ConfigUpdater>();
 
         services.AddHostedService<GoodWeFetcher>();
-        // services.AddHostedService<PriceFetcher>();
+        services.AddHostedService<PriceFetcher>();
 
         services.AddMetricServer(options => { options.Port = 12345; });
     }
