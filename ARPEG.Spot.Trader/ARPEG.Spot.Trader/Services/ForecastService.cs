@@ -26,13 +26,13 @@ public class ForecastService
         _logger.LogInformation("Current date time is {dt}", DateTime.Now);
         return _forecastForToday[DateTime.Now.Hour];
     }
-    
+
     public int GetForecast24()
     {
         _logger.LogInformation("Current date time is {dt}", DateTime.Now);
         var hour = DateTime.Now.Hour;
         return _forecastForTommorow.Take(hour + 1).Sum()
-            + _forecastForToday.Skip(hour + 1).Sum();
+               + _forecastForToday.Skip(hour + 1).Sum();
     }
 
     public int GetMaxForecast()
@@ -75,11 +75,11 @@ public class ForecastService
     public bool PossibleFulfillBattery()
     {
         var hour = DateTime.Now.Hour;
-        return
-            PossibleFulfillBattery(
-                hour > 17 || hour < 8
-                    ? _forecastForTommorow
-                    : _forecastForToday);
+        if (hour > 17)
+            return PossibleFulfillBattery(_forecastForTommorow);
+        if (hour < 8)
+            return PossibleFulfillBattery(_forecastForToday);
+        return true;
     }
 
     private bool PossibleFulfillBattery(int[] forecast)
