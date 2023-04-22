@@ -13,7 +13,7 @@ public class TemperatureValueHandler : IDataValueHandler
     public bool? Handle(DataValue value,
         BitOutputOptions options)
     {
-        if(value is { group: DataGroupNames.Battery, part: TemperatureGroupParts.Temperature_Air })
+        if(value is { group: DataGroupNames.Temperature, part: TemperatureGroupParts.Temperature_Air })
         {
             if (options.GreaterThen == (value.value < options.TriggerValueOff))
                 return false;
