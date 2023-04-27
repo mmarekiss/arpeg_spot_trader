@@ -1,7 +1,15 @@
+using ARPEG.Sport.Licence.Server;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-var host = new HostBuilder()
+var builder = new HostBuilder()
     .ConfigureFunctionsWorkerDefaults()
-    .Build();
+    .ConfigureServices(s =>
+    {
+        s.AddTransient<TableStorageReader>();
+    });
+
+var host = builder.Build();
+
 
 host.Run();

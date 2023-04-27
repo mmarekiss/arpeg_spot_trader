@@ -8,27 +8,29 @@ namespace ARPEG.Sport.Licence.Server;
 
 public class CheckLicenceFunction
 {
-    private readonly ILogger _logger;
+    private readonly ILogger logger;
+    private readonly TableStorageReader tableStorageReader;
 
-    public CheckLicenceFunction(ILoggerFactory loggerFactory)
+    public CheckLicenceFunction(ILoggerFactory loggerFactory,
+        TableStorageReader tableStorageReader)
     {
-        _logger = loggerFactory.CreateLogger<CheckLicenceFunction>();
+        logger = loggerFactory.CreateLogger<CheckLicenceFunction>();
+        this.tableStorageReader = tableStorageReader;
     }
-
 
     [Function("GetLicence/{sn}")]
     public async Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequestData req,
         string sn,
         CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Get licence for {SN}", sn);
+        logger.LogInformation("Get licence for {SN}", sn);
 
         var response = req.CreateResponse(HttpStatusCode.OK);
 
         await response.WriteAsJsonAsync(new Spot.Trader.Integration.RunLicence
         {
             SerialNumber = sn,
-            LicenceVersion = LicenceVersion.Standard
+            LicenceVersion = await tableStorageReader.GetLicenceVersion(sn)
         }, cancellationToken);
 
         return response;

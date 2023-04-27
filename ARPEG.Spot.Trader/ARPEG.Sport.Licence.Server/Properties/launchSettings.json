@@ -2,7 +2,10 @@
   "profiles": {
     "ARPEG.Sport.Licence.Server": {
       "commandName": "Project",
-      "commandLineArgs": "--port 7081"
+      "commandLineArgs": "--port 7081",
+      "environmentVariables": {
+        "AzureWebJobsStorage": "DefaultEndpointsProtocol=https;AccountName=arpeglicencesstorage;AccountKey=DBN1eYHhsTO+cnP9ywlt4OJBeWGH+79g4FT6vAI+TlBmvweum3cDmoNUqVBIW1in4kLAczVFCKYC+AStQE35Ng==;EndpointSuffix=core.windows.net"
+      }
     },
     "Docker": {
       "commandName": "Docker",
