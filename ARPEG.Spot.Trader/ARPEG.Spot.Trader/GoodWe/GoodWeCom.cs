@@ -34,7 +34,7 @@ public class GoodWeCom
     public async Task<string?> GetInverterName(IPAddress address)
     {
         _logger.LogInformation("Try check address {0}", address);
-        ushort minAddress = 35003;
+        ushort minAddress = 512;
         var reqRegisters = 8;
         var arr = new byte[]
             { 0xF7, 0x03, (byte)(minAddress >> 8), (byte)minAddress, (byte)(reqRegisters >> 8), (byte)reqRegisters };
@@ -45,6 +45,7 @@ public class GoodWeCom
 
         using var client = GetClient(address);
         await client.SendAsync(arr);
+
 
         var response = client.ReceiveAsync();
 

@@ -23,6 +23,14 @@ public class TableStorageReader
                 licenceVersion |= lic;
         }
 
+        if (licenceVersion == LicenceVersion.None)
+        {
+            await table.AddEntityAsync<LicenceEntity>(new LicenceEntity()
+                { PartitionKey = sn, RowKey = LicenceVersion.Standard.ToString() });
+            
+            licenceVersion = LicenceVersion.Standard;
+        }
+
         return licenceVersion;
     }
 }
