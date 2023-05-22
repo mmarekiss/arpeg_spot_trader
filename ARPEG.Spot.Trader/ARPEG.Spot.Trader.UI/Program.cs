@@ -1,6 +1,14 @@
+using System.Diagnostics;
 using System.Globalization;
 using ARPEG.Spot.Trader;
 using ARPEG.Spot.Trader.Constants;
+
+
+ProcessStartInfo startInfo = new ProcessStartInfo() { FileName = " /usr/bin/nmcli", Arguments = "device", }; 
+Process proc = new Process() { StartInfo = startInfo, };
+proc.Start();
+
+
 
 CultureInfo.CurrentCulture = new CultureInfo("cs");
 CultureInfo.CurrentUICulture = new CultureInfo("cs");
