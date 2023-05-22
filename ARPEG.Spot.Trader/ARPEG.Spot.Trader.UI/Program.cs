@@ -4,10 +4,11 @@ using ARPEG.Spot.Trader;
 using ARPEG.Spot.Trader.Constants;
 
 
-ProcessStartInfo startInfo = new ProcessStartInfo() { FileName = " /usr/bin/nmcli", Arguments = "device", }; 
-Process proc = new Process() { StartInfo = startInfo, };
-proc.Start();
 
+    ProcessStartInfo startInfo = new ProcessStartInfo() { FileName = " /usr/bin/nmcli", Arguments = "device", };
+    Process proc = new Process() { StartInfo = startInfo, };
+    proc.Start();
+    Console.WriteLine(proc.StandardOutput.ReadToEnd());
 
 
 CultureInfo.CurrentCulture = new CultureInfo("cs");
