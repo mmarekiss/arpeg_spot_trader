@@ -46,7 +46,7 @@ public class BitController<TOptions> : IBitController, IDisposable
 
         var description = CreateDescription(_options);
         if(value.HasValue){
-            _logger.LogInformation("Set output for pin {pinId} {value}", _options.Pin, value);
+            _logger.LogDebug("Set output for pin {pinId} {value}", _options.Pin, value);
         
 #if !DEBUG
           _controller.Write(_options.Pin, !value.Value);

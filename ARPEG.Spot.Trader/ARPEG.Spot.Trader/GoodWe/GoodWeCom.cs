@@ -252,7 +252,7 @@ public class GoodWeCom
         Definition definition,
         params DataPoint[] points)
     {
-        await Task.Delay(500);
+        await Task.Delay(1000);
         var minAddress = points.Min(x => x.Address);
         var maxAddress = points.Max(x => x.Address);
         var reqRegisters = maxAddress - minAddress + 1;
