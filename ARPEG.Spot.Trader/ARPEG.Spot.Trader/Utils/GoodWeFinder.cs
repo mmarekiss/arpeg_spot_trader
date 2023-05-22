@@ -24,6 +24,8 @@ public class GoodWeFinder
             var sn = await _goodWe.GetInverterName(address);
             if (!string.IsNullOrWhiteSpace(sn))
                 return (sn, address);
+            _logger.LogError("Cannot connect to Inverter at address {Address}", address);
+            await Task.Delay(TimeSpan.FromSeconds(10));
         }
 
         return ("", IPAddress.None);

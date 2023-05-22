@@ -36,19 +36,14 @@ public class GoodWeFetcher : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        if (Environment.GetEnvironmentVariable("Env") == "Dev")
-        {
-            foreach (NetworkInterface nic in NetworkInterface.GetAllNetworkInterfaces())
-            {
-                IPInterfaceProperties ipProps = nic.GetIPProperties();
-                // check if localAddr is in ipProps.UnicastAddresses
-                _logger.LogInformation(String.Join("; ",ipProps.UnicastAddresses.Select(x=>x.Address)));
-            }
-        }
-        
         if (IPAddress.TryParse(_goodWeConfig.Value.Ip, out var ipAddress))
         {
             var goodWee = await _finder.GetGoodWe(ipAddress, stoppingToken);
+            if (goodWee.address.Equals(IPAddress.None))
+            {
+                throw new ApplicationException("GoodWe Not Found");
+            }
+
             await RunTrader(goodWee.SN, goodWee.address, stoppingToken);
         }
         else
@@ -78,11 +73,11 @@ public class GoodWeFetcher : BackgroundService
                 SN = name,
                 Address = address,
                 Licence = licence.LicenceVersion
-            }; 
+            };
             _invStore.AddGoodWe(definition);
             var communicator = _serviceProvider.GetService<GoodWeCom>() ??
                                throw new ApplicationException("please define goodWe comm");
-            
+
             while (!cancellationToken.IsCancellationRequested)
             {
                 await communicator.GetHomeConsumption(definition, cancellationToken);
@@ -97,6 +92,7 @@ public class GoodWeFetcher : BackgroundService
     private async Task<RunLicence?> FetchLicence(string name)
     {
         var client = new HttpClient();
-        return await client.GetFromJsonAsync<RunLicence>($"https://arpeg-licences.azurewebsites.net/api/getLicence/{name}");
+        return await client.GetFromJsonAsync<RunLicence>(
+            $"https://arpeg-licences.azurewebsites.net/api/getLicence/{name}");
     }
 }
