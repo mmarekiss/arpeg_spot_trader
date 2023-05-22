@@ -1,6 +1,5 @@
 ﻿using System.Net;
 using System.Net.Http.Json;
-using System.Net.NetworkInformation;
 using ARPEG.Spot.Trader.Config;
 using ARPEG.Spot.Trader.Integration;
 using ARPEG.Spot.Trader.Store;

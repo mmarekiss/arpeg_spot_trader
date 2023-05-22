@@ -1,4 +1,5 @@
 ﻿using System.Net;
+using System.Net.NetworkInformation;
 using Microsoft.Extensions.Logging;
 using TecoBridge.GoodWe;
 
@@ -14,6 +15,35 @@ public class GoodWeFinder
     {
         _goodWe = goodWe;
         _logger = logger;
+    }
+    
+    public bool PingHost(string nameOrAddress)
+    {
+        bool pingable = false;
+        Ping pinger = null;
+
+        try
+        {
+            pinger = new Ping();
+            PingReply reply = pinger.Send(nameOrAddress);
+            pingable = reply.Status == IPStatus.Success;
+            
+            _logger.LogError("{Address} is reachable {Reachable}", nameOrAddress, pingable);
+
+        }
+        catch (PingException)
+        {
+            // Discard PingExceptions and return false;
+        }
+        finally
+        {
+            if (pinger != null)
+            {
+                pinger.Dispose();
+            }
+        }
+
+        return pingable;
     }
 
     public async Task<(string SN, IPAddress address)> GetGoodWe(IPAddress address,
