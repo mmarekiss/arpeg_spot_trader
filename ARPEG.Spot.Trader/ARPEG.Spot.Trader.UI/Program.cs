@@ -1,21 +1,6 @@
-using System.Diagnostics;
 using System.Globalization;
-using System.Net.NetworkInformation;
 using ARPEG.Spot.Trader;
 using ARPEG.Spot.Trader.Constants;
-
-
-
-if (Environment.GetEnvironmentVariable("Env") == "Dev")
-{
-    foreach (NetworkInterface nic in NetworkInterface.GetAllNetworkInterfaces())
-    {
-        IPInterfaceProperties ipProps = nic.GetIPProperties();
-        // check if localAddr is in ipProps.UnicastAddresses
-        Console.WriteLine(String.Join("; ",ipProps.UnicastAddresses.Select(x=>x.Address)));
-    }
-}
-
 
 CultureInfo.CurrentCulture = new CultureInfo("cs");
 CultureInfo.CurrentUICulture = new CultureInfo("cs");

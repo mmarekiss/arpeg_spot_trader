@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using System.Net.Http.Json;
+using System.Net.NetworkInformation;
 using ARPEG.Spot.Trader.Config;
 using ARPEG.Spot.Trader.Integration;
 using ARPEG.Spot.Trader.Store;
@@ -35,6 +36,16 @@ public class GoodWeFetcher : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        if (Environment.GetEnvironmentVariable("Env") == "Dev")
+        {
+            foreach (NetworkInterface nic in NetworkInterface.GetAllNetworkInterfaces())
+            {
+                IPInterfaceProperties ipProps = nic.GetIPProperties();
+                // check if localAddr is in ipProps.UnicastAddresses
+                _logger.LogInformation(String.Join("; ",ipProps.UnicastAddresses.Select(x=>x.Address)));
+            }
+        }
+        
         if (IPAddress.TryParse(_goodWeConfig.Value.Ip, out var ipAddress))
         {
             var goodWee = await _finder.GetGoodWe(ipAddress, stoppingToken);
