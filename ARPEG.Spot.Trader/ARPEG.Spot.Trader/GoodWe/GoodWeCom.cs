@@ -65,7 +65,7 @@ public class GoodWeCom
         }
         else
         {
-            _logger.LogInformation("Timeout");
+            _logger.LogInformation("Timeout: IsCompleted=>{completed}", response.IsCompleted);
         }
 
         return null;
