@@ -1,14 +1,20 @@
 using System.Diagnostics;
 using System.Globalization;
+using System.Net.NetworkInformation;
 using ARPEG.Spot.Trader;
 using ARPEG.Spot.Trader.Constants;
 
 
 
-    ProcessStartInfo startInfo = new ProcessStartInfo() { FileName = " /usr/bin/nmcli", Arguments = "device", };
-    Process proc = new Process() { StartInfo = startInfo, };
-    proc.Start();
-    Console.WriteLine(proc.StandardOutput.ReadToEnd());
+if (Environment.GetEnvironmentVariable("Env") == "Dev")
+{
+    foreach (NetworkInterface nic in NetworkInterface.GetAllNetworkInterfaces())
+    {
+        IPInterfaceProperties ipProps = nic.GetIPProperties();
+        // check if localAddr is in ipProps.UnicastAddresses
+        Console.WriteLine(String.Join("; ",ipProps.UnicastAddresses.Select(x=>x.Address)));
+    }
+}
 
 
 CultureInfo.CurrentCulture = new CultureInfo("cs");
