@@ -9,7 +9,7 @@
     <EditForm Model="@Configuration" OnValidSubmit="Save">
         <div class="card">
             <div class="card-body">
-                <label>Obchodovat na burze</label>
+                <label>Obchodovat na burze (Není aktivní, pokud máte SPOT licenci)</label>
                 <InputCheckbox @bind-Value="Configuration.Grid.TradeEnergy"></InputCheckbox>
 
                 <label>Nabíjecí výkon</label>

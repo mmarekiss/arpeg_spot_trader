@@ -4,7 +4,8 @@
 public enum LicenceVersion
 {
     None = 0x00,
-    Standard = 0x01
+    Standard = 0x01,
+    Spot = 0x02
 }
 
 public class RunLicence
