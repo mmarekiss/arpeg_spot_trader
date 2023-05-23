@@ -39,7 +39,7 @@ public class GoodWeFetcher : BackgroundService
     {
         var login = "rock";
         var password = "rock";
-        var server_address = "rockpis.local";
+        var server_address = "host.docker.internal";
             
         SshClient client = new SshClient(server_address, 22, login, password);
         client.Connect();
