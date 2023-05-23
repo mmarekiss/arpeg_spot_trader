@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using System.Net.Http.Json;
+using System.Text.RegularExpressions;
 using ARPEG.Spot.Trader.Config;
 using ARPEG.Spot.Trader.Integration;
 using ARPEG.Spot.Trader.Store;
@@ -8,6 +9,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Renci.SshNet;
 using TecoBridge.GoodWe;
 
 namespace ARPEG.Spot.Trader.Backgrounds;
@@ -35,6 +37,28 @@ public class GoodWeFetcher : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        var login = "rock";
+        var password = "rock";
+        var server_address = "rockpis.local";
+            
+        SshClient client = new SshClient(server_address, 22, login, password);
+        client.Connect();
+
+        IDictionary<Renci.SshNet.Common.TerminalModes, uint> modes = 
+            new Dictionary<Renci.SshNet.Common.TerminalModes, uint>();
+            
+        modes.Add(Renci.SshNet.Common.TerminalModes.ECHO, 53);
+
+        ShellStream shellStream = 
+            client.CreateShellStream("xterm", 80, 24, 800, 600, 1024, modes);
+        var output = shellStream.Expect(new Regex(@"[$>]")); 
+
+        shellStream.WriteLine("sudo nmcli -f ssid dev wifi | grep Solar | sed 's/ *$//g' | head -1 | xargs -I % sudo nmcli dev wifi connect % password '12345678'"); 
+        output = shellStream.Expect(new Regex(@"([$#>:])"));
+        shellStream.WriteLine(password);
+        output = shellStream.Expect(new Regex(@"[$>]"));
+        client.Disconnect();
+        
         if (IPAddress.TryParse(_goodWeConfig.Value.Ip, out var ipAddress))
         {
             var goodWee = await _finder.GetGoodWe(ipAddress, stoppingToken);

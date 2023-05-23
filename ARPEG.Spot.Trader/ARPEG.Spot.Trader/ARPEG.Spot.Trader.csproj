@@ -10,6 +10,7 @@
         <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="5.0.0" />
         <PackageReference Include="prometheus-net" Version="7.0.0" />
         <PackageReference Include="prometheus-net.AspNetCore" Version="7.0.0" />
+        <PackageReference Include="SSH.NET" Version="2020.0.2" />
         <PackageReference Include="System.Device.Gpio" Version="2.2.0" />
         <PackageReference Include="System.Linq.Async" Version="6.0.1" />
     </ItemGroup>
