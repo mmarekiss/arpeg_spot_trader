@@ -39,7 +39,7 @@ public class GoodWeFetcher : BackgroundService
     {
         var login = "rock";
         var password = "rock";
-        var server_address = Environment.GetEnvironmentVariable("host");
+        var server_address = "172.17.0.1";
             
         SshClient client = new SshClient(server_address, 22, login, password);
         client.Connect();
