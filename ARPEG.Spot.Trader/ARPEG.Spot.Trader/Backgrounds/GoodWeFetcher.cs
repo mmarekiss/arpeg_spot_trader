@@ -67,11 +67,11 @@ public class GoodWeFetcher : BackgroundService
         shellStream.WriteLine("nmcli device");
         output = shellStream.Expect(new Regex(@"[$>]"));
         _logger.LogInformation("Connect To WiFi? {WiFiCommand}", output);
-        shellStream.WriteLine("docker image prune");
-        output = shellStream.Expect(new Regex(@"[N]]"));
-        shellStream.WriteLine("y");
-        output = shellStream.Expect(new Regex(@"[$>]"));
-        _logger.LogInformation("Docker images pruned {Output}", output);
+        // shellStream.WriteLine("docker image prune");
+        // output = shellStream.Expect(new Regex(@"[N]]"));
+        // shellStream.WriteLine("y");
+        // output = shellStream.Expect(new Regex(@"[$>]"));
+        // _logger.LogInformation("Docker images pruned {Output}", output);
         client.Disconnect();
 
         if (IPAddress.TryParse(_goodWeConfig.Value.Ip, out var ipAddress))
