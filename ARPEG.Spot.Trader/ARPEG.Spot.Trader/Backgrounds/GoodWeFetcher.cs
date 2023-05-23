@@ -5,11 +5,12 @@ using ARPEG.Spot.Trader.Config;
 using ARPEG.Spot.Trader.Integration;
 using ARPEG.Spot.Trader.Store;
 using ARPEG.Spot.Trader.Utils;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Renci.SshNet;
+using Renci.SshNet.Common;
 using TecoBridge.GoodWe;
 
 namespace ARPEG.Spot.Trader.Backgrounds;
@@ -39,33 +40,44 @@ public class GoodWeFetcher : BackgroundService
     {
         var login = "rock";
         var password = "rock";
+#if DEBUG
+        var serverAddress = "192.168.55.140";
+#else
         var server_address = "172.17.0.1";
-            
-        SshClient client = new SshClient(server_address, 22, login, password);
+#endif
+
+        var client = new SshClient(serverAddress, 22, login, password);
         client.Connect();
 
-        IDictionary<Renci.SshNet.Common.TerminalModes, uint> modes = 
-            new Dictionary<Renci.SshNet.Common.TerminalModes, uint>();
-            
-        modes.Add(Renci.SshNet.Common.TerminalModes.ECHO, 53);
+        IDictionary<TerminalModes, uint> modes =
+            new Dictionary<TerminalModes, uint>();
 
-        ShellStream shellStream = 
+        modes.Add(TerminalModes.ECHO, 53);
+
+        var shellStream =
             client.CreateShellStream("xterm", 80, 24, 800, 600, 1024, modes);
-        var output = shellStream.Expect(new Regex(@"[$>]")); 
+        var output = shellStream.Expect(new Regex(@"[$>]"));
 
-        shellStream.WriteLine("sudo nmcli -f ssid dev wifi | grep Solar | sed 's/ *$//g' | head -1 | xargs -I % sudo nmcli dev wifi connect % password '12345678'"); 
+        shellStream.WriteLine(
+            "sudo nmcli -f ssid dev wifi | grep Solar | sed 's/ *$//g' | head -1 | xargs -I % sudo nmcli dev wifi connect % password '12345678'");
         output = shellStream.Expect(new Regex(@"([$#>:])"));
+        _logger.LogInformation("Connect To WiFi command {WiFiCommand}", output);
         shellStream.WriteLine(password);
         output = shellStream.Expect(new Regex(@"[$>]"));
+        shellStream.WriteLine("nmcli device");
+        output = shellStream.Expect(new Regex(@"[$>]"));
+        _logger.LogInformation("Connect To WiFi? {WiFiCommand}", output);
+        shellStream.WriteLine("docker image prune");
+        output = shellStream.Expect(new Regex(@"[N]]"));
+        shellStream.WriteLine("y");
+        output = shellStream.Expect(new Regex(@"[$>]"));
+        _logger.LogInformation("Docker images pruned {Output}", output);
         client.Disconnect();
-        
+
         if (IPAddress.TryParse(_goodWeConfig.Value.Ip, out var ipAddress))
         {
             var goodWee = await _finder.GetGoodWe(ipAddress, stoppingToken);
-            if (goodWee.address.Equals(IPAddress.None))
-            {
-                throw new ApplicationException("GoodWe Not Found");
-            }
+            if (goodWee.address.Equals(IPAddress.None)) throw new ApplicationException("GoodWe Not Found");
 
             await RunTrader(goodWee.SN, goodWee.address, stoppingToken);
         }
@@ -91,7 +103,7 @@ public class GoodWeFetcher : BackgroundService
         {
             _logger.LogWarning("Your licence for {name} is {lic}", name, licence.LicenceVersion.ToString());
 
-            var definition = new Definition()
+            var definition = new Definition
             {
                 SN = name,
                 Address = address,
@@ -102,9 +114,7 @@ public class GoodWeFetcher : BackgroundService
                                throw new ApplicationException("please define goodWe comm");
 
             while (!cancellationToken.IsCancellationRequested)
-            {
                 await communicator.GetHomeConsumption(definition, cancellationToken);
-            }
         }
         else
         {
