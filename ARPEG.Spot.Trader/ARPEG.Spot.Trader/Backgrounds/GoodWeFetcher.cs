@@ -43,7 +43,7 @@ public class GoodWeFetcher : BackgroundService
 #if DEBUG
         var serverAddress = "192.168.55.140";
 #else
-        var server_address = "172.17.0.1";
+        var serverAddress = "172.17.0.1";
 #endif
 
         var client = new SshClient(serverAddress, 22, login, password);
