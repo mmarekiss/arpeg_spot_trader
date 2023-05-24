@@ -70,36 +70,36 @@ public class PriceFetcher : BackgroundService
         gaugePvForecast.WithLabels("now").Set(pvForecast);
         gaugePvForecast.WithLabels("24").Set(pForecast24);
 
-        if (GridOptions.TradeEnergy)
-        {
-            var exportLimitDef = GridOptions.ExportLimit;
-            var exportLimit = exportLimitDef ?? 10_000;
-
-            if (price < 10)
-            {
-                exportLimit = Math.Min(exportLimit, (ushort)200);
-                await InvokeMethodNonSpot(g => communicator.SetExportLimit((ushort)exportLimit, g, stoppingToken));
-            }
-            else if (exportLimitDef.HasValue)
-            {
-                await InvokeMethodNonSpot(g => communicator.SetExportLimit((ushort)exportLimit, g, stoppingToken));
-            }
-            else
-            {
-                await InvokeMethodNonSpot(g => communicator.DisableExportLimit(g, stoppingToken));
-            }
-
-            if ((price < -10 && pvForecast < 100)
-                || (priceService.IsMinPriceOfNight() && !forecastService.PossibleFulfillBattery()))
-                await InvokeMethodNonSpot(g =>
-                    communicator.ForceBatteryCharge(g, (ushort)GridOptions.ChargePower, stoppingToken));
-            else
-                await InvokeMethodNonSpot(g => communicator.StopForceBatteryCharge(g, stoppingToken));
-        }
-        else
-        {
-            logger.LogInformation("Energy trading is disabled");
-        }
+        // if (GridOptions.TradeEnergy)
+        // {
+        //     var exportLimitDef = GridOptions.ExportLimit;
+        //     var exportLimit = exportLimitDef ?? 10_000;
+        //
+        //     if (price < 10)
+        //     {
+        //         exportLimit = Math.Min(exportLimit, (ushort)200);
+        //         await InvokeMethodNonSpot(g => communicator.SetExportLimit((ushort)exportLimit, g, stoppingToken));
+        //     }
+        //     else if (exportLimitDef.HasValue)
+        //     {
+        //         await InvokeMethodNonSpot(g => communicator.SetExportLimit((ushort)exportLimit, g, stoppingToken));
+        //     }
+        //     else
+        //     {
+        //         await InvokeMethodNonSpot(g => communicator.DisableExportLimit(g, stoppingToken));
+        //     }
+        //
+        //     if ((price < -10 && pvForecast < 100)
+        //         || (priceService.IsMinPriceOfNight() && !forecastService.PossibleFulfillBattery()))
+        //         await InvokeMethodNonSpot(g =>
+        //             communicator.ForceBatteryCharge(g, (ushort)GridOptions.ChargePower, stoppingToken));
+        //     else
+        //         await InvokeMethodNonSpot(g => communicator.StopForceBatteryCharge(g, stoppingToken));
+        // }
+        // else
+        // {
+        //     logger.LogInformation("Energy trading is disabled");
+        // }
 
         await HandleExternalBatteryManagement(stoppingToken);
     }
@@ -112,10 +112,10 @@ public class PriceFetcher : BackgroundService
             switch(batteryManagement?.BatteryManagement) 
             {
                 case BatteryManagement.ForceCharge :
-                    await communicator.ForceBatteryCharge(gw, 6_000, stoppingToken);
+                    await communicator.ForceBatteryCharge(gw, 10_000, stoppingToken);
                     break;
                 case BatteryManagement.ForceDischarge:
-                    await communicator.ForceBatteryDisCharge(gw, 6_000, stoppingToken);
+                    await communicator.ForceBatteryDisCharge(gw, 10_000, stoppingToken);
                     break;
                 default:
                     await communicator.StopForceBatteryCharge(gw, stoppingToken);
