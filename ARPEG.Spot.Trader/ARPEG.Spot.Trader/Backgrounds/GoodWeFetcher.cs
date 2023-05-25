@@ -10,6 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Prometheus;
 using Renci.SshNet;
 using Renci.SshNet.Common;
 using TecoBridge.GoodWe;
@@ -18,11 +19,13 @@ namespace ARPEG.Spot.Trader.Backgrounds;
 
 public class GoodWeFetcher : BackgroundService
 {
-    private readonly GoodWeFinder _finder;
-    private readonly IOptions<GoodWe> _goodWeConfig;
-    private readonly IGoodWeInvStore _invStore;
-    private readonly ILogger<GoodWeFetcher> _logger;
-    private readonly IServiceProvider _serviceProvider;
+    private readonly GoodWeFinder finder;
+    private readonly IOptions<GoodWe> goodWeConfig;
+    private readonly Version version;
+    private readonly IGoodWeInvStore invStore;
+    private readonly ILogger<GoodWeFetcher> logger;
+    private readonly IServiceProvider serviceProvider;
+    private readonly Gauge gauge;
 
     public GoodWeFetcher(GoodWeFinder finder,
         IOptions<GoodWe> goodWeConfig,
@@ -30,11 +33,14 @@ public class GoodWeFetcher : BackgroundService
         ILogger<GoodWeFetcher> logger,
         IServiceProvider serviceProvider)
     {
-        _finder = finder;
-        _goodWeConfig = goodWeConfig;
-        _invStore = invStore;
-        _logger = logger;
-        _serviceProvider = serviceProvider;
+        this.finder = finder;
+        this.goodWeConfig = goodWeConfig;
+        this.invStore = invStore;
+        this.logger = logger;
+        this.serviceProvider = serviceProvider;
+        this.version = GetType().Assembly.GetName().Version ?? new Version(0, 0); 
+        
+        gauge = Metrics.CreateGauge("Version", "GoodWe traced value", new GaugeConfiguration { LabelNames = new[] { "sn", "part" } });
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -46,20 +52,19 @@ public class GoodWeFetcher : BackgroundService
             ConnectWiFi(login, password);
         }
 
-        if (IPAddress.TryParse(_goodWeConfig.Value.Ip, out var ipAddress))
+        if (IPAddress.TryParse(goodWeConfig.Value.Ip, out var ipAddress))
         {
-            var goodWee = await _finder.GetGoodWe(ipAddress, stoppingToken);
+            var goodWee = await finder.GetGoodWe(ipAddress, stoppingToken);
             if (goodWee.address.Equals(IPAddress.None)) throw new ApplicationException("GoodWe Not Found");
-
             await RunTrader(goodWee.SN, goodWee.address, stoppingToken);
         }
         else
         {
-            var addresses = IpFetcher.GetAddressess(_logger).ToArray();
-            await foreach (var goodWee in _finder.FindGoodWees(addresses)
+            var addresses = IpFetcher.GetAddressess(logger).ToArray();
+            await foreach (var goodWee in finder.FindGoodWees(addresses)
                                .WithCancellation(stoppingToken))
             {
-                _logger.LogInformation("Found GoodWe at {Ip}", goodWee.address);
+                logger.LogInformation("Found GoodWe at {Ip}", goodWee.address);
                 await RunTrader(goodWee.SN, goodWee.address, stoppingToken);
             }
         }
@@ -85,12 +90,12 @@ public class GoodWeFetcher : BackgroundService
         shellStream.WriteLine(
             "sudo nmcli -f ssid dev wifi | grep Solar | sed 's/ *$//g' | head -1 | xargs -I % sudo nmcli dev wifi connect % password '12345678'");
         output = shellStream.Expect(new Regex(@"([$#>:])"));
-        _logger.LogInformation("Connect To WiFi command {WiFiCommand}", output);
+        logger.LogInformation("Connect To WiFi command {WiFiCommand}", output);
         shellStream.WriteLine(password);
         output = shellStream.Expect(new Regex(@"[$>]"));
         shellStream.WriteLine("nmcli device");
         output = shellStream.Expect(new Regex(@"[$>]"));
-        _logger.LogInformation("Connect To WiFi? {WiFiCommand}", output);
+        logger.LogInformation("Connect To WiFi? {WiFiCommand}", output);
         // shellStream.WriteLine("docker image prune");
         // output = shellStream.Expect(new Regex(@"[N]]"));
         // shellStream.WriteLine("y");
@@ -99,24 +104,31 @@ public class GoodWeFetcher : BackgroundService
         client.Disconnect();
     }
 
-    private async Task RunTrader(string name,
+    private void ExposeVersionToTraces(string sn)
+    {
+        gauge.WithLabels(sn, "Major").Set(version.Major);
+        gauge.WithLabels(sn, "Minor").Set(version.Minor);
+    }
+
+    private async Task RunTrader(string sn,
         IPAddress address,
         CancellationToken cancellationToken)
     {
-        var licence = await FetchLicence(name);
+        ExposeVersionToTraces(sn);
+        var licence = await FetchLicence(sn);
 
         if (licence is not null && licence.LicenceVersion != LicenceVersion.None)
         {
-            _logger.LogWarning("Your licence for {name} is {lic}", name, licence.LicenceVersion.ToString());
+            logger.LogWarning("Your licence for {name} is {lic}", sn, licence.LicenceVersion.ToString());
 
             var definition = new Definition
             {
-                SN = name,
+                SN = sn,
                 Address = address,
                 Licence = licence.LicenceVersion
             };
-            _invStore.AddGoodWe(definition);
-            var communicator = _serviceProvider.GetService<GoodWeCom>() ??
+            invStore.AddGoodWe(definition);
+            var communicator = serviceProvider.GetService<GoodWeCom>() ??
                                throw new ApplicationException("please define goodWe comm");
 
             while (!cancellationToken.IsCancellationRequested)
@@ -124,7 +136,7 @@ public class GoodWeFetcher : BackgroundService
         }
         else
         {
-            _logger.LogWarning("You don't have licence for {name}", name);
+            logger.LogWarning("You don't have licence for {name}", sn);
         }
     }
 
