@@ -33,4 +33,30 @@ public class TableStorageReader
 
         return licenceVersion;
     }
+    
+    public async Task<BatteryManagement> GetBatteryManagement(string sn)
+    {
+        const string rowKey = "Charge";
+        var licence = await GetLicenceVersion(sn);
+        
+        if (licence.HasFlag(LicenceVersion.Spot))
+        {
+            var nowHour = DateTime.UtcNow.Hour;
+            var table = this.tableServiceClient.GetTableClient("battery");
+            var battery = await table.GetEntityIfExistsAsync<BatteryEntity>(sn, rowKey);
+            if (battery.HasValue)
+            {
+                if (battery.Value.ForceCharge == nowHour)
+                    return BatteryManagement.ForceCharge;
+                if (battery.Value.ForceDischarge == nowHour)
+                    return BatteryManagement.ForceDischarge;
+            }
+            else
+            {
+                await table.AddEntityAsync(new BatteryEntity { PartitionKey = sn, RowKey = rowKey });
+            }
+        }
+
+        return BatteryManagement.Normal;
+    }
 }

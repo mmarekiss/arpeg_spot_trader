@@ -93,6 +93,14 @@ public class GoodWeCom
         await SetUint16Value(47512, chargePower, definition, cancellationToken);
         await SetUint16Value(47511, 2, definition, cancellationToken);
     }
+    
+    public async Task ForceBatteryDisCharge(Definition definition,
+        ushort chargePower,
+        CancellationToken cancellationToken)
+    {
+        await SetUint16Value(47512, chargePower, definition, cancellationToken);
+        await SetUint16Value(47511, 3, definition, cancellationToken);
+    }
 
     public async Task StopForceBatteryCharge(Definition definition,
         CancellationToken cancellationToken)

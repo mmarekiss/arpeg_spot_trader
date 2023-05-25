@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System.Diagnostics;
+using System.Net;
 using System.Net.Http.Json;
 using System.Text.RegularExpressions;
 using ARPEG.Spot.Trader.Config;
@@ -40,11 +41,34 @@ public class GoodWeFetcher : BackgroundService
     {
         var login = "rock";
         var password = "rock";
-#if DEBUG
-        var serverAddress = "192.168.55.140";
-#else
+        if (!Debugger.IsAttached)
+        {
+            ConnectWiFi(login, password);
+        }
+
+        if (IPAddress.TryParse(_goodWeConfig.Value.Ip, out var ipAddress))
+        {
+            var goodWee = await _finder.GetGoodWe(ipAddress, stoppingToken);
+            if (goodWee.address.Equals(IPAddress.None)) throw new ApplicationException("GoodWe Not Found");
+
+            await RunTrader(goodWee.SN, goodWee.address, stoppingToken);
+        }
+        else
+        {
+            var addresses = IpFetcher.GetAddressess(_logger).ToArray();
+            await foreach (var goodWee in _finder.FindGoodWees(addresses)
+                               .WithCancellation(stoppingToken))
+            {
+                _logger.LogInformation("Found GoodWe at {Ip}", goodWee.address);
+                await RunTrader(goodWee.SN, goodWee.address, stoppingToken);
+            }
+        }
+    }
+
+    private void ConnectWiFi(string login,
+        string password)
+    {
         var serverAddress = "172.17.0.1";
-#endif
 
         var client = new SshClient(serverAddress, 22, login, password);
         client.Connect();
@@ -73,24 +97,6 @@ public class GoodWeFetcher : BackgroundService
         // output = shellStream.Expect(new Regex(@"[$>]"));
         // _logger.LogInformation("Docker images pruned {Output}", output);
         client.Disconnect();
-
-        if (IPAddress.TryParse(_goodWeConfig.Value.Ip, out var ipAddress))
-        {
-            var goodWee = await _finder.GetGoodWe(ipAddress, stoppingToken);
-            if (goodWee.address.Equals(IPAddress.None)) throw new ApplicationException("GoodWe Not Found");
-
-            await RunTrader(goodWee.SN, goodWee.address, stoppingToken);
-        }
-        else
-        {
-            var addresses = IpFetcher.GetAddressess(_logger).ToArray();
-            await foreach (var goodWee in _finder.FindGoodWees(addresses)
-                               .WithCancellation(stoppingToken))
-            {
-                _logger.LogInformation("Found GoodWe at {Ip}", goodWee.address);
-                await RunTrader(goodWee.SN, goodWee.address, stoppingToken);
-            }
-        }
     }
 
     private async Task RunTrader(string name,
