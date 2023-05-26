@@ -105,7 +105,6 @@ public class GoodWeCom
     public async Task StopForceBatteryCharge(Definition definition,
         CancellationToken cancellationToken)
     {
-        await SetUint16Value(47512, 0, definition, cancellationToken);
         await SetUint16Value(47511, 1, definition, cancellationToken);
     }
 
