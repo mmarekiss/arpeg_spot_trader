@@ -19,14 +19,14 @@ public static class AddServicesStartup
     public static void AddServices(this IServiceCollection services,
         IConfiguration configuration)
     {
-        services.Configure<Grid>(configuration.GetSection(nameof(Grid)));
-        services.AddSingleton<Grid>(s => s.GetRequiredService<IOptions<Grid>>().Value);
         services.Configure<GoodWe>(configuration.GetSection(nameof(GoodWe)));
         services.Configure<PvForecast>(configuration.GetSection(nameof(PvForecast)));
+        services.RegisterSingletonConfig<ManualBatteryConfig>( configuration);
+
         services.AddSingleton<Root>(s =>
             new Root
             {
-                Grid = s.GetRequiredService<Grid>(),
+                ManualBatteryConfig = s.GetRequiredService<ManualBatteryConfig>(),
                 BitOutput1 = s.GetRequiredService<BitOutput1>(),
                 BitOutput2 = s.GetRequiredService<BitOutput2>(),
                 BitOutput3 = s.GetRequiredService<BitOutput3>(),
@@ -64,6 +64,14 @@ public static class AddServicesStartup
         services.AddHostedService<PriceFetcher>();
 
         services.AddMetricServer(options => { options.Port = 12345; });
+    }
+
+    private static void RegisterSingletonConfig<T>(this IServiceCollection services,
+        IConfiguration configuration)
+    where T : class
+    {
+        services.Configure<T>(configuration.GetSection(typeof(T).Name));
+        services.AddSingleton<T>(s => s.GetRequiredService<IOptions<T>>().Value);
     }
 
     private static void RegisterBitController<TOptions>(this IServiceCollection services,

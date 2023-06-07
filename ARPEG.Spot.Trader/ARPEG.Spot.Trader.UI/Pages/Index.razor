@@ -1,4 +1,5 @@
 ﻿@page "/"
+@using ARPEG.Spot.Trader.Integration
 
 <PageTitle>ARPEG spot trader</PageTitle>
 
@@ -19,16 +20,40 @@
         @*         <InputNumber @bind-Value="Configuration.Grid.ExportLimit"></InputNumber> *@
         @*     </div> *@
         @* </div> *@
-        
-        <BitSetter BitOutput=Configuration.BitOutput1 BitHandlers="BitHandlers.Select(x => x.Type)" GoodWees="GwStore.GoodWes.Select(x => x.SN)"/>
-        <BitSetter BitOutput=Configuration.BitOutput2 BitHandlers="BitHandlers.Select(x => x.Type)" GoodWees="GwStore.GoodWes.Select(x => x.SN)"/>
-        <BitSetter BitOutput=Configuration.BitOutput3 BitHandlers="BitHandlers.Select(x => x.Type)" GoodWees="GwStore.GoodWes.Select(x => x.SN)"/>
-        <BitSetter BitOutput=Configuration.BitOutput4 BitHandlers="BitHandlers.Select(x => x.Type)" GoodWees="GwStore.GoodWes.Select(x => x.SN)"/>
-        <BitSetter BitOutput=Configuration.BitOutput5 BitHandlers="BitHandlers.Select(x => x.Type)" GoodWees="GwStore.GoodWes.Select(x => x.SN)"/>
-        <BitSetter BitOutput=Configuration.BitOutput6 BitHandlers="BitHandlers.Select(x => x.Type)" GoodWees="GwStore.GoodWes.Select(x => x.SN)"/>
-        <BitSetter BitOutput=Configuration.BitOutput7 BitHandlers="BitHandlers.Select(x => x.Type)" GoodWees="GwStore.GoodWes.Select(x => x.SN)"/>
-        <BitSetter BitOutput=Configuration.BitOutput8 BitHandlers="BitHandlers.Select(x => x.Type)" GoodWees="GwStore.GoodWes.Select(x => x.SN)"/>
-        
+
+        <div class="card">
+            <H2>Obchodovat s baterií je dostupné jen s licencí ManualBattery</H2>
+            <span>Aktuální cena na spotu je <span style="font-weight: bold">@CurrentPrice €/MWh</span></span>
+            @if (GwStore.GoodWes.Any(x => x.Licence.HasFlag(LicenceVersion.ManualBattery)))
+            {
+                <div>
+                    <label>Nabíjení baterie </label>
+                    <InputCheckbox @bind-Value="Configuration.ManualBatteryConfig.Charge" />
+                    <label>Maximální cena pro nabíjení baterie ze sítě</label>
+                    <InputNumber @bind-Value="Configuration.ManualBatteryConfig.MaxPriceForCharge"/>€/MWh
+                </div>
+                <div>
+                    <label>Vybíjení baterie </label>
+                    <InputCheckbox @bind-Value="Configuration.ManualBatteryConfig.Discharge" />
+                    <label>Minimální cena pro vybíjení baterie do sítě </label>
+                    <InputNumber @bind-Value="Configuration.ManualBatteryConfig.MinPriceForDischarge"/>€/MWh
+                </div>
+            }
+        </div>
+        <div class="card">
+            <H2>Ovládání výstupů je možné jen s rozšířením a licencí Outputs</H2>
+             @if (GwStore.GoodWes.Any(x => x.Licence.HasFlag(LicenceVersion.Outputs)))
+             {
+                 <BitSetter BitOutput=Configuration.BitOutput1 BitHandlers="BitHandlers.Select(x => x.Type)" GoodWees="GwStore.GoodWes.Where(x => x.Licence.HasFlag(LicenceVersion.Outputs)).Select(x => x.SN)"/>
+                 <BitSetter BitOutput=Configuration.BitOutput2 BitHandlers="BitHandlers.Select(x => x.Type)" GoodWees="GwStore.GoodWes.Where(x => x.Licence.HasFlag(LicenceVersion.Outputs)).Select(x => x.SN)"/>
+                 <BitSetter BitOutput=Configuration.BitOutput3 BitHandlers="BitHandlers.Select(x => x.Type)" GoodWees="GwStore.GoodWes.Where(x => x.Licence.HasFlag(LicenceVersion.Outputs)).Select(x => x.SN)"/>
+                 <BitSetter BitOutput=Configuration.BitOutput4 BitHandlers="BitHandlers.Select(x => x.Type)" GoodWees="GwStore.GoodWes.Where(x => x.Licence.HasFlag(LicenceVersion.Outputs)).Select(x => x.SN)"/>
+                 <BitSetter BitOutput=Configuration.BitOutput5 BitHandlers="BitHandlers.Select(x => x.Type)" GoodWees="GwStore.GoodWes.Where(x => x.Licence.HasFlag(LicenceVersion.Outputs)).Select(x => x.SN)"/>
+                 <BitSetter BitOutput=Configuration.BitOutput6 BitHandlers="BitHandlers.Select(x => x.Type)" GoodWees="GwStore.GoodWes.Where(x => x.Licence.HasFlag(LicenceVersion.Outputs)).Select(x => x.SN)"/>
+                 <BitSetter BitOutput=Configuration.BitOutput7 BitHandlers="BitHandlers.Select(x => x.Type)" GoodWees="GwStore.GoodWes.Where(x => x.Licence.HasFlag(LicenceVersion.Outputs)).Select(x => x.SN)"/>
+                 <BitSetter BitOutput=Configuration.BitOutput8 BitHandlers="BitHandlers.Select(x => x.Type)" GoodWees="GwStore.GoodWes.Where(x => x.Licence.HasFlag(LicenceVersion.Outputs)).Select(x => x.SN)"/>
+             }
+        </div>
         <button type="submit">Uložit</button>
 
     </EditForm>

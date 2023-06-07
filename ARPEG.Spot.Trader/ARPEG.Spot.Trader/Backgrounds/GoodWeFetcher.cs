@@ -73,35 +73,38 @@ public class GoodWeFetcher : BackgroundService
     private void ConnectWiFi(string login,
         string password)
     {
-        var serverAddress = "172.17.0.1";
+        if (!Debugger.IsAttached)
+        {
+            var serverAddress = "172.17.0.1";
 
-        var client = new SshClient(serverAddress, 22, login, password);
-        client.Connect();
+            var client = new SshClient(serverAddress, 22, login, password);
+            client.Connect();
 
-        IDictionary<TerminalModes, uint> modes =
-            new Dictionary<TerminalModes, uint>();
+            IDictionary<TerminalModes, uint> modes =
+                new Dictionary<TerminalModes, uint>();
 
-        modes.Add(TerminalModes.ECHO, 53);
+            modes.Add(TerminalModes.ECHO, 53);
 
-        var shellStream =
-            client.CreateShellStream("xterm", 80, 24, 800, 600, 1024, modes);
-        var output = shellStream.Expect(new Regex(@"[$>]"));
+            var shellStream =
+                client.CreateShellStream("xterm", 80, 24, 800, 600, 1024, modes);
+            var output = shellStream.Expect(new Regex(@"[$>]"));
 
-        shellStream.WriteLine(
-            "sudo nmcli -f ssid dev wifi | grep Solar | sed 's/ *$//g' | head -1 | xargs -I % sudo nmcli dev wifi connect % password '12345678'");
-        output = shellStream.Expect(new Regex(@"([$#>:])"));
-        logger.LogInformation("Connect To WiFi command {WiFiCommand}", output);
-        shellStream.WriteLine(password);
-        output = shellStream.Expect(new Regex(@"[$>]"));
-        shellStream.WriteLine("nmcli device");
-        output = shellStream.Expect(new Regex(@"[$>]"));
-        logger.LogInformation("Connect To WiFi? {WiFiCommand}", output);
-        // shellStream.WriteLine("docker image prune");
-        // output = shellStream.Expect(new Regex(@"[N]]"));
-        // shellStream.WriteLine("y");
-        // output = shellStream.Expect(new Regex(@"[$>]"));
-        // _logger.LogInformation("Docker images pruned {Output}", output);
-        client.Disconnect();
+            shellStream.WriteLine(
+                "sudo nmcli -f ssid dev wifi | grep Solar | sed 's/ *$//g' | head -1 | xargs -I % sudo nmcli dev wifi connect % password '12345678'");
+            output = shellStream.Expect(new Regex(@"([$#>:])"));
+            logger.LogInformation("Connect To WiFi command {WiFiCommand}", output);
+            shellStream.WriteLine(password);
+            output = shellStream.Expect(new Regex(@"[$>]"));
+            shellStream.WriteLine("nmcli device");
+            output = shellStream.Expect(new Regex(@"[$>]"));
+            logger.LogInformation("Connect To WiFi? {WiFiCommand}", output);
+            // shellStream.WriteLine("docker image prune");
+            // output = shellStream.Expect(new Regex(@"[N]]"));
+            // shellStream.WriteLine("y");
+            // output = shellStream.Expect(new Regex(@"[$>]"));
+            // _logger.LogInformation("Docker images pruned {Output}", output);
+            client.Disconnect();
+        }
     }
 
     private void ExposeVersionToTraces(string sn)

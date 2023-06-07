@@ -14,14 +14,20 @@ public partial class Index
 
     [Inject]
     public  IConfigUpdater  ConfigUpdater { get; init; } = null!;
+    
+    [Inject]
+    public  PriceService PriceService { get; init; } = null!;
 
     [Inject]
     public  IEnumerable<IDataValueHandler> BitHandlers { get; init; } = null!;
-    private Root? Configuration { get; set; } 
-    
+    private Root? Configuration { get; set; }
+
+    private double CurrentPrice { get; set; }
+
     protected override Task OnInitializedAsync()
     {
         Configuration = ConfigUpdater?.GetCurrent();
+        CurrentPrice = PriceService.GetCurrentPrice();
         return base.OnInitializedAsync();
     }
     

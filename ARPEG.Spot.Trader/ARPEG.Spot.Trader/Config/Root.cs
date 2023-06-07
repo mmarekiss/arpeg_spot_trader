@@ -4,9 +4,9 @@ namespace ARPEG.Spot.Trader.Config;
 
 public class Root
 {
-    public Grid Grid { get; init; } = new();
-
     public PvForecast PvForecast { get; init; } = new();
+
+    public ManualBatteryConfig ManualBatteryConfig { get; init; } = new ManualBatteryConfig();
 
     public BitOutput1 BitOutput1 { get; init; } = new();
 

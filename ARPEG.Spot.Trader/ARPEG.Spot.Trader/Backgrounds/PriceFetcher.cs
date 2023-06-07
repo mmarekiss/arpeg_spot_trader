@@ -18,28 +18,28 @@ public class PriceFetcher : BackgroundService
     private readonly Gauge gaugePvForecast;
 
     private readonly IGoodWeInvStore invStore;
+    private readonly ManualBatteryConfig manualBatteryConfig;
     private readonly ILogger<PriceFetcher> logger;
     private readonly PriceService priceService;
 
-    public PriceFetcher(PriceService priceService,
+    public PriceFetcher(
+        PriceService priceService,
         GoodWeCom communicator,
         ForecastService forecastService,
-        Grid options,
         IGoodWeInvStore invStore,
+        ManualBatteryConfig manualBatteryConfig,
         ILogger<PriceFetcher> logger)
     {
         this.priceService = priceService;
         this.communicator = communicator;
         this.forecastService = forecastService;
-        GridOptions = options;
         this.invStore = invStore;
+        this.manualBatteryConfig = manualBatteryConfig;
         this.logger = logger;
 
         gauge = Metrics.CreateGauge("Price", "Current price from OTE");
         gaugePvForecast = Metrics.CreateGauge("PV_forecast", "Solar forecast", "part");
     }
-
-    private Grid GridOptions { get; }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -72,6 +72,27 @@ public class PriceFetcher : BackgroundService
 
         await AvoidNegativePrice(price, stoppingToken);
         await HandleExternalBatteryManagement(stoppingToken);
+        await HandleManualBatteryManagement(price, stoppingToken);
+    }
+
+    private async Task HandleManualBatteryManagement(double price,
+        CancellationToken stoppingToken)
+    {
+        foreach (var gw in invStore.GoodWes.Where(g => g.Licence.HasFlag(LicenceVersion.ManualBattery)))
+        {
+            if (manualBatteryConfig.Charge && price < manualBatteryConfig.MaxPriceForCharge)
+            {
+                await communicator.ForceBatteryCharge(gw, 10_000, stoppingToken);
+            }
+            else if (manualBatteryConfig.Discharge && price > manualBatteryConfig.MinPriceForDischarge)
+            {
+                await communicator.ForceBatteryDisCharge(gw, 10_000, stoppingToken);
+            }
+            else
+            {
+                await communicator.SetSelfConsumptionMode(gw, stoppingToken);
+            }
+        }
     }
 
     private async Task AvoidNegativePrice(double price,
@@ -98,7 +119,7 @@ public class PriceFetcher : BackgroundService
                     await communicator.ForceBatteryDisCharge(gw, 10_000, stoppingToken);
                     break;
                 default:
-                    await communicator.StopForceBatteryCharge(gw, stoppingToken);
+                    await communicator.SetSelfConsumptionMode(gw, stoppingToken);
                     break;
             };
         }
