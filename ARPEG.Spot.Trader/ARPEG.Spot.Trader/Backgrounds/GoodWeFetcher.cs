@@ -89,21 +89,21 @@ public class GoodWeFetcher : BackgroundService
                 client.CreateShellStream("xterm", 80, 24, 800, 600, 1024, modes);
             var output = shellStream.Expect(new Regex(@"[$>]"));
 
-            shellStream.WriteLine(
-                "sudo nmcli -f ssid dev wifi | grep Solar | sed 's/ *$//g' | head -1 | xargs -I % sudo nmcli dev wifi connect % password '12345678'");
-            output = shellStream.Expect(new Regex(@"([$#>:])"));
-            logger.LogInformation("Connect To WiFi command {WiFiCommand}", output);
-            shellStream.WriteLine(password);
+            shellStream.WriteLine("nmcli device | grep Solar");
             output = shellStream.Expect(new Regex(@"[$>]"));
-            shellStream.WriteLine("nmcli device");
-            output = shellStream.Expect(new Regex(@"[$>]"));
-            logger.LogInformation("Connect To WiFi? {WiFiCommand}", output);
-            // shellStream.WriteLine("docker image prune");
-            // output = shellStream.Expect(new Regex(@"[N]]"));
-            // shellStream.WriteLine("y");
-            // output = shellStream.Expect(new Regex(@"[$>]"));
-            // _logger.LogInformation("Docker images pruned {Output}", output);
-            client.Disconnect();
+            if (!output.Contains("Solar") && !output.Contains("connected"))
+            {
+                shellStream.WriteLine(
+                    "sudo nmcli -f ssid dev wifi | grep Solar | sed 's/ *$//g' | head -1 | xargs -I % sudo nmcli dev wifi connect % password '12345678'");
+                output = shellStream.Expect(new Regex(@"([$#>:])"));
+                logger.LogInformation("Connect To WiFi command {WiFiCommand}", output);
+                shellStream.WriteLine(password);
+                output = shellStream.Expect(new Regex(@"[$>]"));
+                shellStream.WriteLine("nmcli device");
+                output = shellStream.Expect(new Regex(@"[$>]"));
+                logger.LogInformation("Connect To WiFi? {WiFiCommand}", output);
+                client.Disconnect();
+            }
         }
     }
 
