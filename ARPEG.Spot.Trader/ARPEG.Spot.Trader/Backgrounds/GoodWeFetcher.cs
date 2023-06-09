@@ -76,7 +76,7 @@ public class GoodWeFetcher : BackgroundService
     private void ConnectWiFi(string login,
         string password)
     {
-        var serverAddress = "rockpi.local";
+        var serverAddress = "172.17.0.1";
 
         var client = new SshClient(serverAddress, 22, login, password);
         client.Connect();
