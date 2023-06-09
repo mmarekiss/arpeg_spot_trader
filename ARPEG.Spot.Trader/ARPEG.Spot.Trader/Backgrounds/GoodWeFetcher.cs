@@ -27,6 +27,7 @@ public class GoodWeFetcher : BackgroundService
     private readonly IServiceProvider serviceProvider;
     private readonly Gauge gauge;
     private readonly Gauge gaugeIp;
+    private readonly List<string> myIps = new List<string>();
 
     public GoodWeFetcher(GoodWeFinder finder,
         IOptions<GoodWe> goodWeConfig,
@@ -75,60 +76,62 @@ public class GoodWeFetcher : BackgroundService
     private void ConnectWiFi(string login,
         string password)
     {
-        if (!Debugger.IsAttached)
+        var serverAddress = "172.17.0.1";
+
+        var client = new SshClient(serverAddress, 22, login, password);
+        client.Connect();
+
+        IDictionary<TerminalModes, uint> modes =
+            new Dictionary<TerminalModes, uint>();
+
+        modes.Add(TerminalModes.ECHO, 53);
+
+        var shellStream =
+            client.CreateShellStream("xterm", 80, 24, 800, 600, 1024, modes);
+        var output = shellStream.Expect(new Regex(@"[$>]"));
+
+        shellStream.WriteLine("nmcli device | grep Solar");
+        output = shellStream.Expect(new Regex(@"[$>]"));
+        if (!output.Contains("Solar") && !output.Contains("connected"))
         {
-            var serverAddress = "172.17.0.1";
-
-            var client = new SshClient(serverAddress, 22, login, password);
-            client.Connect();
-
-            IDictionary<TerminalModes, uint> modes =
-                new Dictionary<TerminalModes, uint>();
-
-            modes.Add(TerminalModes.ECHO, 53);
-
-            var shellStream =
-                client.CreateShellStream("xterm", 80, 24, 800, 600, 1024, modes);
-            var output = shellStream.Expect(new Regex(@"[$>]"));
-
-            shellStream.WriteLine("nmcli device | grep Solar");
+            shellStream.WriteLine(
+                "sudo nmcli -f ssid dev wifi | grep Solar | sed 's/ *$//g' | head -1 | xargs -I % sudo nmcli dev wifi connect % password '12345678'");
+            output = shellStream.Expect(new Regex(@"([$#>:])"));
+            logger.LogInformation("Connect To WiFi command {WiFiCommand}", output);
+            shellStream.WriteLine(password);
             output = shellStream.Expect(new Regex(@"[$>]"));
-            if (!output.Contains("Solar") && !output.Contains("connected"))
-            {
-                shellStream.WriteLine(
-                    "sudo nmcli -f ssid dev wifi | grep Solar | sed 's/ *$//g' | head -1 | xargs -I % sudo nmcli dev wifi connect % password '12345678'");
-                output = shellStream.Expect(new Regex(@"([$#>:])"));
-                logger.LogInformation("Connect To WiFi command {WiFiCommand}", output);
-                shellStream.WriteLine(password);
-                output = shellStream.Expect(new Regex(@"[$>]"));
-                shellStream.WriteLine("nmcli device");
-                output = shellStream.Expect(new Regex(@"[$>]"));
-                logger.LogInformation("Connect To WiFi? {WiFiCommand}", output);
-                client.Disconnect();
-            }
+            shellStream.WriteLine("nmcli device");
+            output = shellStream.Expect(new Regex(@"[$>]"));
+            logger.LogInformation("Connect To WiFi? {WiFiCommand}", output);
+            client.Disconnect();
         }
+
+        shellStream.WriteLine(
+            @"ifconfig | grep 'inet '| sed -e 's/inet \([0-9.]*\) .*$/\1/g'");
+        Thread.Sleep(TimeSpan.FromSeconds(1));
+        output = shellStream.Expect(new Regex(@"[$>]"));
+
+        myIps.AddRange(output.Split(Environment.NewLine));
     }
 
     private void ExposeVersionToTraces(string sn)
     {
         gauge.WithLabels(sn, "Major").Set(version.Major);
         gauge.WithLabels(sn, "Minor").Set(version.Minor);
-        
-        var addresses = IpFetcher.GetAddressess(logger).ToArray();
-        int addr = 1;
-        foreach (var adr in addresses)
+
+        var addr = 0;
+        foreach (var adr in myIps)
         {
-            var bytes = adr.addr.GetAddressBytes();
-            if (bytes.Length == 4)
+            var match = Regex.Match(adr, "(?<g1>\\d+).(?<g2>\\d+).(?<g3>\\d+).(?<g4>\\d+)");
+            if (match.Success)
             {
-                for (int i = 0; i < 4; i++)
+                for (int i = 1; i <= 4; i++)
                 {
-                    gaugeIp.WithLabels(sn, addr.ToString(), i.ToString()).Set(bytes[i]);
+                    gaugeIp.WithLabels(sn, addr.ToString(), i.ToString()).Set(Int32.Parse(match.Groups[$"g{i}"].Value));
                 }
             }
             addr++;
         }
-        
     }
 
     private async Task RunTrader(string sn,
