@@ -26,6 +26,7 @@ public class GoodWeFetcher : BackgroundService
     private readonly ILogger<GoodWeFetcher> logger;
     private readonly IServiceProvider serviceProvider;
     private readonly Gauge gauge;
+    private readonly Gauge gaugeIp;
 
     public GoodWeFetcher(GoodWeFinder finder,
         IOptions<GoodWe> goodWeConfig,
@@ -41,6 +42,7 @@ public class GoodWeFetcher : BackgroundService
         this.version = GetType().Assembly.GetName().Version ?? new Version(0, 0); 
         
         gauge = Metrics.CreateGauge("Version", "GoodWe traced value", new GaugeConfiguration { LabelNames = new[] { "sn", "part" } });
+        gaugeIp = Metrics.CreateGauge("IP", "trader IP", new GaugeConfiguration { LabelNames = new[] { "sn", "id", "part" } });
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -111,6 +113,22 @@ public class GoodWeFetcher : BackgroundService
     {
         gauge.WithLabels(sn, "Major").Set(version.Major);
         gauge.WithLabels(sn, "Minor").Set(version.Minor);
+        
+        var addresses = IpFetcher.GetAddressess(logger).ToArray();
+        int addr = 1;
+        foreach (var adr in addresses)
+        {
+            var bytes = adr.addr.GetAddressBytes();
+            if (bytes.Length == 4)
+            {
+                for (int i = 0; i < 4; i++)
+                {
+                    gaugeIp.WithLabels(sn, addr.ToString(), i.ToString()).Set(bytes[i]);
+                }
+            }
+            addr++;
+        }
+        
     }
 
     private async Task RunTrader(string sn,
