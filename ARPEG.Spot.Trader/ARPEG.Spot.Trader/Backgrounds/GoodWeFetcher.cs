@@ -43,7 +43,7 @@ public class GoodWeFetcher : BackgroundService
         this.version = GetType().Assembly.GetName().Version ?? new Version(0, 0); 
         
         gauge = Metrics.CreateGauge("Version", "GoodWe traced value", new GaugeConfiguration { LabelNames = new[] { "sn", "part" } });
-        gaugeIp = Metrics.CreateGauge("IP", "trader IP", new GaugeConfiguration { LabelNames = new[] { "sn", "id", "part" } });
+        gaugeIp = Metrics.CreateGauge("IP", "trader IP", new GaugeConfiguration { LabelNames = new[] { "sn", "ip" } });
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -76,7 +76,7 @@ public class GoodWeFetcher : BackgroundService
     private void ConnectWiFi(string login,
         string password)
     {
-        var serverAddress = "172.17.0.1";
+        var serverAddress = "rockpi.local";
 
         var client = new SshClient(serverAddress, 22, login, password);
         client.Connect();
@@ -107,7 +107,7 @@ public class GoodWeFetcher : BackgroundService
         }
 
         shellStream.WriteLine(
-            @"ifconfig | grep 'inet '| sed -e 's/inet \([0-9.]*\) .*$/\1/g'");
+            @"ifconfig | grep 'inet '| sed -e 's/^ *inet \([0-9.]*\) .*$/\1/g'");
         Thread.Sleep(TimeSpan.FromSeconds(1));
         output = shellStream.Expect(new Regex(@"[$>]"));
 
@@ -119,18 +119,13 @@ public class GoodWeFetcher : BackgroundService
         gauge.WithLabels(sn, "Major").Set(version.Major);
         gauge.WithLabels(sn, "Minor").Set(version.Minor);
 
-        var addr = 0;
         foreach (var adr in myIps)
         {
-            var match = Regex.Match(adr, "(?<g1>\\d+).(?<g2>\\d+).(?<g3>\\d+).(?<g4>\\d+)");
-            if (match.Success)
+            var match = Regex.IsMatch(adr, "\\d+\\.\\d+\\.\\d+\\.\\d+");
+            if (match)
             {
-                for (int i = 1; i <= 4; i++)
-                {
-                    gaugeIp.WithLabels(sn, addr.ToString(), i.ToString()).Set(Int32.Parse(match.Groups[$"g{i}"].Value));
-                }
+                gaugeIp.WithLabels(sn, adr).Set(1);
             }
-            addr++;
         }
     }
 
