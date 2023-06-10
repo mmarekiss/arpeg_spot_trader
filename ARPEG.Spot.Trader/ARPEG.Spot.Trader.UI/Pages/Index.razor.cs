@@ -17,6 +17,9 @@ public partial class Index
     
     [Inject]
     public  PriceService PriceService { get; init; } = null!;
+    
+    [Inject]
+    public  NowManualBatteryService NowManualBatteryService { get; init; } = null!;
 
     [Inject]
     public  IEnumerable<IDataValueHandler> BitHandlers { get; init; } = null!;
@@ -24,10 +27,13 @@ public partial class Index
 
     private double CurrentPrice { get; set; }
 
+    private NowManualBatteryService.BatteryChargeDirection CurrentDirection { get; set; }
+
     protected override Task OnInitializedAsync()
     {
         Configuration = ConfigUpdater?.GetCurrent();
         CurrentPrice = PriceService.GetCurrentPrice();
+        CurrentDirection = NowManualBatteryService.GetActiveDirection();
         return base.OnInitializedAsync();
     }
     
@@ -37,5 +43,11 @@ public partial class Index
         {
             await ConfigUpdater.SaveCurrent(Configuration, CancellationToken.None);
         }
+    }
+
+    private void SetManualBattery(NowManualBatteryService.BatteryChargeDirection action)
+    {
+        NowManualBatteryService.SetBatteryMode(action);
+        CurrentDirection = NowManualBatteryService.GetActiveDirection();
     }
 }

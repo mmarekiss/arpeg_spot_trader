@@ -21,6 +21,7 @@ public class PriceFetcher : BackgroundService
     private readonly ManualBatteryConfig manualBatteryConfig;
     private readonly ILogger<PriceFetcher> logger;
     private readonly PriceService priceService;
+    private readonly NowManualBatteryService nowManualBatteryService;
 
     public PriceFetcher(
         PriceService priceService,
@@ -28,7 +29,8 @@ public class PriceFetcher : BackgroundService
         ForecastService forecastService,
         IGoodWeInvStore invStore,
         ManualBatteryConfig manualBatteryConfig,
-        ILogger<PriceFetcher> logger)
+        ILogger<PriceFetcher> logger,
+        NowManualBatteryService nowManualBatteryService)
     {
         this.priceService = priceService;
         this.communicator = communicator;
@@ -36,6 +38,7 @@ public class PriceFetcher : BackgroundService
         this.invStore = invStore;
         this.manualBatteryConfig = manualBatteryConfig;
         this.logger = logger;
+        this.nowManualBatteryService = nowManualBatteryService;
 
         gauge = Metrics.CreateGauge("Price", "Current price from OTE");
         gaugePvForecast = Metrics.CreateGauge("PV_forecast", "Solar forecast", "part");
@@ -70,9 +73,34 @@ public class PriceFetcher : BackgroundService
         gaugePvForecast.WithLabels("now").Set(pvForecast);
         gaugePvForecast.WithLabels("24").Set(pForecast24);
 
+        if (!await ManualBattery(stoppingToken))
+        {
+            await HandleManualBatteryManagement(price, stoppingToken);
+        }
+
         await AvoidNegativePrice(price, stoppingToken);
         await HandleExternalBatteryManagement(stoppingToken);
-        await HandleManualBatteryManagement(price, stoppingToken);
+    }
+
+    private async Task<bool> ManualBattery(CancellationToken stoppingToken)
+    {
+        var direction = nowManualBatteryService.GetActiveDirection();
+        if (direction == NowManualBatteryService.BatteryChargeDirection.None)
+            return false;
+        
+        foreach (var gw in invStore.GoodWes.Where(g => g.Licence.HasFlag(LicenceVersion.ManualBattery)))
+        {
+            switch (direction)
+            {
+                case NowManualBatteryService.BatteryChargeDirection.Charge:
+                    await communicator.ForceBatteryCharge(gw, 10_000, stoppingToken);
+                    break;
+                case NowManualBatteryService.BatteryChargeDirection.Discharge:
+                    await communicator.ForceBatteryDisCharge(gw, 10_000, stoppingToken);
+                    break;
+            }
+        }
+        return true;
     }
 
     private async Task HandleManualBatteryManagement(double price,
@@ -103,6 +131,7 @@ public class PriceFetcher : BackgroundService
                 await communicator.SetExportLimit(0, gw, stoppingToken);
             else
                 await communicator.DisableExportLimit(gw, stoppingToken);
+        
     }
 
     private async Task HandleExternalBatteryManagement(CancellationToken stoppingToken)

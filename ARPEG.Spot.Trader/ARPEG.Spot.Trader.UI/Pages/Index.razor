@@ -1,5 +1,6 @@
 ﻿@page "/"
 @using ARPEG.Spot.Trader.Integration
+@using ARPEG.Spot.Trader.Services
 
 <PageTitle>ARPEG spot trader</PageTitle>
 
@@ -22,22 +23,63 @@
         @* </div> *@
 
         <div class="card">
-            <H2>Obchodovat s baterií je dostupné jen s licencí ManualBattery</H2>
+            
             <span>Aktuální cena na spotu je <span style="font-weight: bold">@CurrentPrice €/MWh</span></span>
             @if (GwStore.GoodWes.Any(x => x.Licence.HasFlag(LicenceVersion.ManualBattery)))
             {
                 <div>
                     <label>Nabíjení baterie </label>
-                    <InputCheckbox @bind-Value="Configuration.ManualBatteryConfig.Charge" />
+                    <InputCheckbox @bind-Value="Configuration.ManualBatteryConfig.Charge"/>
                     <label>Maximální cena pro nabíjení baterie ze sítě</label>
                     <InputNumber @bind-Value="Configuration.ManualBatteryConfig.MaxPriceForCharge"/>€/MWh
                 </div>
                 <div>
                     <label>Vybíjení baterie </label>
-                    <InputCheckbox @bind-Value="Configuration.ManualBatteryConfig.Discharge" />
+                    <InputCheckbox @bind-Value="Configuration.ManualBatteryConfig.Discharge"/>
                     <label>Minimální cena pro vybíjení baterie do sítě </label>
                     <InputNumber @bind-Value="Configuration.ManualBatteryConfig.MinPriceForDischarge"/>€/MWh
                 </div>
+                <button type="submit">Uložit</button>
+            }
+            else
+            {
+                <H2>Obchodovat s baterií je dostupné jen s licencí ManualBattery</H2>
+            }</div>
+        <div class="card">
+            @if (GwStore.GoodWes.Any(x => x.Licence.HasFlag(LicenceVersion.ManualBattery)))
+            {
+                <div>
+                    <h5>Aktuální ruční ovládání pro tuto hodinu:
+                        @switch (CurrentDirection)
+                        {
+                            case NowManualBatteryService.BatteryChargeDirection.None:
+                                <text> Neaktivní </text>
+                                break;
+                            case NowManualBatteryService.BatteryChargeDirection.Charge:
+                                <text> Nabíjení </text>
+                                break;
+                            case NowManualBatteryService.BatteryChargeDirection.Discharge:
+                                <text> Vybíjení </text>
+                                break;
+                        }
+                    </h5>
+                    <button disabled="@(CurrentDirection == NowManualBatteryService.BatteryChargeDirection.Charge)"
+                            @onclick="() => SetManualBattery(NowManualBatteryService.BatteryChargeDirection.Charge)">
+                        Nabíjej
+                    </button>
+                    <button disabled="@(CurrentDirection == NowManualBatteryService.BatteryChargeDirection.Discharge)"
+                            @onclick="() => SetManualBattery(NowManualBatteryService.BatteryChargeDirection.Discharge)">
+                        Vybíjej
+                    </button>
+                    <button disabled="@(CurrentDirection == NowManualBatteryService.BatteryChargeDirection.None)"
+                            @onclick="() => SetManualBattery(NowManualBatteryService.BatteryChargeDirection.None)">
+                        Automat
+                    </button>
+                </div>
+            }
+            else
+            {
+                <H2>Manuálně řídit baterii je dostupné jen s licencí ManualBattery</H2>
             }
         </div>
         <div class="card">
@@ -52,9 +94,10 @@
                  <BitSetter BitOutput=Configuration.BitOutput6 BitHandlers="BitHandlers.Select(x => x.Type)" GoodWees="GwStore.GoodWes.Where(x => x.Licence.HasFlag(LicenceVersion.Outputs)).Select(x => x.SN)"/>
                  <BitSetter BitOutput=Configuration.BitOutput7 BitHandlers="BitHandlers.Select(x => x.Type)" GoodWees="GwStore.GoodWes.Where(x => x.Licence.HasFlag(LicenceVersion.Outputs)).Select(x => x.SN)"/>
                  <BitSetter BitOutput=Configuration.BitOutput8 BitHandlers="BitHandlers.Select(x => x.Type)" GoodWees="GwStore.GoodWes.Where(x => x.Licence.HasFlag(LicenceVersion.Outputs)).Select(x => x.SN)"/>
+                 <button type="submit">Uložit</button>
              }
         </div>
-        <button type="submit">Uložit</button>
+        
 
     </EditForm>
 }

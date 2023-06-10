@@ -38,6 +38,8 @@ public static class AddServicesStartup
             }
         );
 
+        services.AddSingleton<NowManualBatteryService>();
+
         services.RegisterBitController<BitOutput1>(configuration);
         services.RegisterBitController<BitOutput2>(configuration);
         services.RegisterBitController<BitOutput3>(configuration);
