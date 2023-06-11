@@ -99,7 +99,7 @@ public class GoodWeCom
         CancellationToken cancellationToken)
     {
         await SetUint16Value(47512, chargePower, definition, cancellationToken);
-        await SetUint16Value(47511, 3, definition, cancellationToken);
+        await SetUint16Value(47511, 5, definition, cancellationToken);
     }
 
     public async Task SetSelfConsumptionMode(Definition definition,
