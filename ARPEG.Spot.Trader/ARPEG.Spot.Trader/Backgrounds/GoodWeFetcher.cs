@@ -57,8 +57,14 @@ public class GoodWeFetcher : BackgroundService
 
         if (IPAddress.TryParse(goodWeConfig.Value.Ip, out var ipAddress))
         {
-            var goodWee = await finder.GetGoodWe(ipAddress, stoppingToken);
-            if (goodWee.address.Equals(IPAddress.None)) throw new ApplicationException("GoodWe Not Found");
+            (string SN, IPAddress address) goodWee;
+            do
+            {
+                ConnectWiFi(login, password);
+
+                    goodWee = await finder.GetGoodWe(ipAddress, stoppingToken);
+            } while (goodWee.address.Equals(IPAddress.None));
+
             await RunTrader(goodWee.SN, goodWee.address, stoppingToken);
         }
         else
@@ -77,6 +83,11 @@ public class GoodWeFetcher : BackgroundService
         string password)
     {
         var serverAddress = "172.17.0.1";
+        
+        if (Debugger.IsAttached)
+        {
+            serverAddress = "192.168.55.140";
+        }
 
         var client = new SshClient(serverAddress, 22, login, password);
         client.Connect();
@@ -89,9 +100,10 @@ public class GoodWeFetcher : BackgroundService
         var shellStream =
             client.CreateShellStream("xterm", 80, 24, 800, 600, 1024, modes);
         var output = shellStream.Expect(new Regex(@"[$>]"));
-
+        logger.LogInformation("xterm: {output}", output);
         shellStream.WriteLine("nmcli device | grep Solar");
         output = shellStream.Expect(new Regex(@"[$>]"));
+        logger.LogInformation("xterm: {output}", output);
         if (!output.Contains("Solar") && !output.Contains("connected"))
         {
             shellStream.WriteLine(
@@ -100,6 +112,7 @@ public class GoodWeFetcher : BackgroundService
             logger.LogInformation("Connect To WiFi command {WiFiCommand}", output);
             shellStream.WriteLine(password);
             output = shellStream.Expect(new Regex(@"[$>]"));
+            logger.LogInformation("xterm: {output}", output);
             shellStream.WriteLine("nmcli device");
             output = shellStream.Expect(new Regex(@"[$>]"));
             logger.LogInformation("Connect To WiFi? {WiFiCommand}", output);
@@ -110,7 +123,7 @@ public class GoodWeFetcher : BackgroundService
             @"ifconfig | grep 'inet '| sed -e 's/^ *inet \([0-9.]*\) .*$/\1/g'");
         Thread.Sleep(TimeSpan.FromSeconds(1));
         output = shellStream.Expect(new Regex(@"[$>]"));
-
+        logger.LogInformation("xterm: {output}", output);
         myIps.AddRange(output.Split(Environment.NewLine));
     }
 
