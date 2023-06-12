@@ -104,7 +104,7 @@ public class GoodWeFetcher : BackgroundService
         shellStream.WriteLine("nmcli device | grep Solar");
         output = shellStream.Expect(new Regex(@"[$>]"));
         logger.LogInformation("xterm: {output}", output);
-        if (!output.Contains("Solar") && !output.Contains("connected"))
+        if (!(output.Contains("Solar") && output.Contains("connected")))
         {
             shellStream.WriteLine(
                 "sudo nmcli -f ssid dev wifi | grep Solar | sed 's/ *$//g' | head -1 | xargs -I % sudo nmcli dev wifi connect % password '12345678'");
