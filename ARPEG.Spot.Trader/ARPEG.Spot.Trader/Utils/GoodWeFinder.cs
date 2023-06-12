@@ -24,26 +24,11 @@ public class GoodWeFinder
         bool pingable = false;
         Ping pinger = null;
 
-        try
-        {
-            pinger = new Ping();
-            PingReply reply = pinger.Send(nameOrAddress);
-            pingable = reply.Status == IPStatus.Success;
-            
-            _logger.LogError("{Address} is reachable {Reachable}", nameOrAddress, pingable);
+        pinger = new Ping();
+        var reply = pinger.Send(nameOrAddress);
+        pingable = reply.Status == IPStatus.Success;
 
-        }
-        catch (PingException)
-        {
-            // Discard PingExceptions and return false;
-        }
-        finally
-        {
-            if (pinger != null)
-            {
-                pinger.Dispose();
-            }
-        }
+        _logger.LogError("{Address} is reachable {Reachable}", nameOrAddress, pingable);
 
         return pingable;
     }
@@ -57,8 +42,10 @@ public class GoodWeFinder
             if (!string.IsNullOrWhiteSpace(sn))
                 return (sn, address);
             _logger.LogError("Cannot connect to Inverter at address {Address}", address);
-            PingHost(address.ToString());
             await Task.Delay(TimeSpan.FromSeconds(10));
+            var result = PingHost(address.ToString());
+            if(!result)
+                return("", IPAddress.None);
         }
 
         return ("", IPAddress.None);
