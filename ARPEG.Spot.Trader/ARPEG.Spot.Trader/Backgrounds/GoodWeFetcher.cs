@@ -104,6 +104,14 @@ public class GoodWeFetcher : BackgroundService
         shellStream.WriteLine("nmcli -f ssid dev wifi");
         output = shellStream.Expect(new Regex(@"[$>]"));
         logger.LogInformation("xterm: {output}", output);
+        if (output.Contains("Solar"))
+        {
+            shellStream.WriteLine(
+                "nmcli -f ssid dev wifi | grep Solar | sed 's/ *$//g' | head -1 |xargs -I % sed -i s/arpeg-1/arpeg-%/g promtailconfig.yml");
+            output = shellStream.Expect(new Regex(@"[$>]"));
+            logger.LogInformation("xterm: {output}", output);
+        }
+
         shellStream.WriteLine("nmcli device | grep Solar");
         output = shellStream.Expect(new Regex(@"[$>]"));
         logger.LogInformation("xterm: {output}", output);
