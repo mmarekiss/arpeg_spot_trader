@@ -101,14 +101,14 @@ public class GoodWeFetcher : BackgroundService
             client.CreateShellStream("xterm", 80, 24, 800, 600, 1024, modes);
         var output = shellStream.Expect(new Regex(@"[$>]"));
         logger.LogInformation("xterm: {output}", output);
+        shellStream.WriteLine("nmcli -f ssid dev wifi");
+        output = shellStream.Expect(new Regex(@"[$>]"));
+        logger.LogInformation("xterm: {output}", output);
         shellStream.WriteLine("nmcli device | grep Solar");
         output = shellStream.Expect(new Regex(@"[$>]"));
         logger.LogInformation("xterm: {output}", output);
         if (!(output.Contains("Solar") && output.Contains("connected")))
         {
-            shellStream.WriteLine("nmcli -f ssid dev wifi");
-            output = shellStream.Expect(new Regex(@"[$>]"));
-            logger.LogInformation("xterm: {output}", output);
             shellStream.WriteLine(
                 "sudo nmcli -f ssid dev wifi | grep Solar | sed 's/ *$//g' | head -1 | xargs -I % sudo nmcli dev wifi connect % password '12345678'");
             output = shellStream.Expect(new Regex(@"([$#>:])"));
