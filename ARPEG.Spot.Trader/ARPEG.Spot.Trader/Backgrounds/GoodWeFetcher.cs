@@ -98,7 +98,7 @@ public class GoodWeFetcher : BackgroundService
         {
             serverAddress = "192.168.55.140";
         }
-
+        
         var client = new SshClient(serverAddress, 22, login, password);
         client.Connect();
 
@@ -139,7 +139,6 @@ public class GoodWeFetcher : BackgroundService
             shellStream.WriteLine("nmcli device");
             output = shellStream.Expect(new Regex(@"[$>]"));
             logger.LogInformation("Connect To WiFi? {WiFiCommand}", output);
-            client.Disconnect();
         }
 
         shellStream.WriteLine(
@@ -149,6 +148,8 @@ public class GoodWeFetcher : BackgroundService
         logger.LogInformation("xterm: {output}", output);
         myIps.AddRange(output.Split(Environment.NewLine)
             .Where(x=>IPAddress.TryParse(x, out _)));
+        client.Disconnect();
+        client.Dispose();
     }
 
     private void ExposeVersionToTraces(string sn)
