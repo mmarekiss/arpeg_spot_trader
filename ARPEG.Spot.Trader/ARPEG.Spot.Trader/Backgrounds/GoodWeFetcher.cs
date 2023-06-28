@@ -62,7 +62,12 @@ public class GoodWeFetcher : BackgroundService
             {
                 ConnectWiFi(login, password);
 
-                    goodWee = await finder.GetGoodWe(ipAddress, stoppingToken);
+                goodWee = await finder.GetGoodWe(ipAddress, stoppingToken);
+                if ( goodWee.address.Equals(IPAddress.None))
+                {
+                    goodWee = await finder.FindGoodWees(GetIpsFromHost()).FirstOrDefaultAsync(stoppingToken);
+                }
+
             } while (goodWee.address.Equals(IPAddress.None));
 
             await RunTrader(goodWee.SN, goodWee.address, stoppingToken);
@@ -77,6 +82,11 @@ public class GoodWeFetcher : BackgroundService
                 await RunTrader(goodWee.SN, goodWee.address, stoppingToken);
             }
         }
+    }
+
+    private (IPAddress address, IPAddress mask)[] GetIpsFromHost()
+    {
+        return myIps.OrderByDescending(x=>x).Select(x => (IPAddress.Parse(x), IPAddress.Parse("255.255.255.0"))).ToArray();
     }
 
     private void ConnectWiFi(string login,
@@ -108,11 +118,13 @@ public class GoodWeFetcher : BackgroundService
         {
             shellStream.WriteLine(
                 "nmcli -f ssid dev wifi | grep Solar | sed 's/ *$//g' | head -1 |xargs -I % sed -i s/arpeg-1/arpeg-%/g promtailconfig.yml");
+            Thread.Sleep(TimeSpan.FromSeconds(1));
             output = shellStream.Expect(new Regex(@"[$>]"));
             logger.LogInformation("xterm: {output}", output);
         }
 
         shellStream.WriteLine("nmcli device | grep Solar");
+        Thread.Sleep(TimeSpan.FromSeconds(1));
         output = shellStream.Expect(new Regex(@"[$>]"));
         logger.LogInformation("xterm: {output}", output);
         if (!(output.Contains("Solar") && output.Contains("connected")))
@@ -135,7 +147,8 @@ public class GoodWeFetcher : BackgroundService
         Thread.Sleep(TimeSpan.FromSeconds(1));
         output = shellStream.Expect(new Regex(@"[$>]"));
         logger.LogInformation("xterm: {output}", output);
-        myIps.AddRange(output.Split(Environment.NewLine));
+        myIps.AddRange(output.Split(Environment.NewLine)
+            .Where(x=>IPAddress.TryParse(x, out _)));
     }
 
     private void ExposeVersionToTraces(string sn)

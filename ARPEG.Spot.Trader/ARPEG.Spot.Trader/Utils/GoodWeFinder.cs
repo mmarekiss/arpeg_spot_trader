@@ -76,6 +76,7 @@ public class GoodWeFinder
                             _logger.LogInformation($"{ip} is not GoodWe");
                         }
                 }));
+            
             await Task.WhenAll(findTasks.ToArray());
             foreach (var r in result) yield return r;
             result.Clear();
