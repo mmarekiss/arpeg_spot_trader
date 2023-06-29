@@ -2,6 +2,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.RegularExpressions;
+using ARPEG.Spot.Trader.Backgrounds.Helpers;
 using ARPEG.Spot.Trader.Config;
 using ARPEG.Spot.Trader.Integration;
 using ARPEG.Spot.Trader.Store;
@@ -11,8 +12,6 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Prometheus;
-using Renci.SshNet;
-using Renci.SshNet.Common;
 using TecoBridge.GoodWe;
 
 namespace ARPEG.Spot.Trader.Backgrounds;
@@ -20,14 +19,14 @@ namespace ARPEG.Spot.Trader.Backgrounds;
 public class GoodWeFetcher : BackgroundService
 {
     private readonly GoodWeFinder finder;
-    private readonly IOptions<GoodWe> goodWeConfig;
-    private readonly Version version;
-    private readonly IGoodWeInvStore invStore;
-    private readonly ILogger<GoodWeFetcher> logger;
-    private readonly IServiceProvider serviceProvider;
     private readonly Gauge gauge;
     private readonly Gauge gaugeIp;
-    private readonly List<string> myIps = new List<string>();
+    private readonly IOptions<GoodWe> goodWeConfig;
+    private readonly IGoodWeInvStore invStore;
+    private readonly ILogger<GoodWeFetcher> logger;
+    private readonly List<string> myIps = new();
+    private readonly IServiceProvider serviceProvider;
+    private readonly Version version;
 
     public GoodWeFetcher(GoodWeFinder finder,
         IOptions<GoodWe> goodWeConfig,
@@ -40,9 +39,10 @@ public class GoodWeFetcher : BackgroundService
         this.invStore = invStore;
         this.logger = logger;
         this.serviceProvider = serviceProvider;
-        this.version = GetType().Assembly.GetName().Version ?? new Version(0, 0); 
+        version = GetType().Assembly.GetName().Version ?? new Version(0, 0);
         this.logger.LogInformation("Start application with version [{Version}]", version);
-        gauge = Metrics.CreateGauge("Version", "GoodWe traced value", new GaugeConfiguration { LabelNames = new[] { "sn", "part" } });
+        gauge = Metrics.CreateGauge("Version", "GoodWe traced value",
+            new GaugeConfiguration { LabelNames = new[] { "sn", "part" } });
         gaugeIp = Metrics.CreateGauge("IP", "trader IP", new GaugeConfiguration { LabelNames = new[] { "sn", "ip" } });
     }
 
@@ -50,24 +50,18 @@ public class GoodWeFetcher : BackgroundService
     {
         var login = "rock";
         var password = "rock";
-        if (!Debugger.IsAttached)
-        {
-            ConnectWiFi(login, password);
-        }
+        if (!Debugger.IsAttached)  myIps.AddRange(SshHelper.ConnectWiFi(login, password, logger));
 
         if (IPAddress.TryParse(goodWeConfig.Value.Ip, out var ipAddress))
         {
             (string SN, IPAddress? address) goodWee;
             do
             {
-                ConnectWiFi(login, password);
+                myIps.AddRange(SshHelper.ConnectWiFi(login, password, logger));
 
                 goodWee = await finder.GetGoodWe(ipAddress, stoppingToken);
-                if ( goodWee.address?.Equals(IPAddress.None) == true)
-                {
+                if (goodWee.address?.Equals(IPAddress.None) == true)
                     goodWee = await finder.FindGoodWees(GetIpsFromHost()).FirstOrDefaultAsync(stoppingToken);
-                }
-
             } while (goodWee.address?.Equals(IPAddress.None) != false);
 
             await RunTrader(goodWee.SN, goodWee.address, stoppingToken);
@@ -86,78 +80,8 @@ public class GoodWeFetcher : BackgroundService
 
     private (IPAddress address, IPAddress mask)[] GetIpsFromHost()
     {
-        return myIps.OrderByDescending(x=>x).Select(x => (IPAddress.Parse(x), IPAddress.Parse("255.255.255.0"))).ToArray();
-    }
-
-    private void ConnectWiFi(string login,
-        string password)
-    {
-        var serverAddress = "172.17.0.1";
-        
-        if (Debugger.IsAttached)
-        {
-            serverAddress = "192.168.55.140";
-        }
-        
-        var client = new SshClient(serverAddress, 22, login, password);
-        client.Connect();
-
-        IDictionary<TerminalModes, uint> modes =
-            new Dictionary<TerminalModes, uint>();
-
-        modes.Add(TerminalModes.ECHO, 53);
-
-        var shellStream =
-            client.CreateShellStream("xterm", 80, 24, 800, 600, 1024, modes);
-        Thread.Sleep(TimeSpan.FromSeconds(1));
-        var output = shellStream.Expect(new Regex(@"rockpi"));
-        output = shellStream.Expect(new Regex(@"[$>]"));
-        logger.LogInformation("xterm: {output}", output);
-        logger.LogInformation("Connected to SSH");
-        shellStream.WriteLine("nmcli -f ssid dev wifi");
-        output = shellStream.Expect(new Regex(@"[$>]"));
-        logger.LogInformation("xterm: {output}", output);
-        logger.LogInformation("WiFi loaded");
-        if (output.Contains("Solar"))
-        {
-            shellStream.WriteLine(
-                "nmcli -f ssid dev wifi | grep Solar | sed 's/ *$//g' | head -1 |xargs -I % sed -i s/arpeg-1/arpeg-%/g promtailconfig.yml");
-            Thread.Sleep(TimeSpan.FromSeconds(1));
-            output = shellStream.Expect(new Regex(@"[$>]"));
-            logger.LogInformation("xterm: {output}", output);
-            output = shellStream.Expect(new Regex(@"[$>]"));
-            logger.LogInformation("xterm: {output}", output);
-            logger.LogInformation("Logger ID updated");
-        }
-        logger.LogInformation("Check WiFi state");
-        shellStream.WriteLine("nmcli device | grep Solar");
-        Thread.Sleep(TimeSpan.FromSeconds(1));
-        output = shellStream.Expect(new Regex(@"[$>]"));
-        logger.LogInformation("xterm: {output}", output);
-        if (!(output.Contains("Solar") && output.Contains("connected")))
-        {
-            shellStream.WriteLine(
-                "sudo nmcli -f ssid dev wifi | grep Solar | sed 's/ *$//g' | head -1 | xargs -I % sudo nmcli dev wifi connect % password '12345678'");
-            output = shellStream.Expect(new Regex(@"([$#>:])"));
-            logger.LogInformation("Connect To WiFi command {WiFiCommand}", output);
-            shellStream.WriteLine(password);
-            output = shellStream.Expect(new Regex(@"[$>]"));
-            logger.LogInformation("xterm: {output}", output);
-            shellStream.WriteLine("nmcli device");
-            output = shellStream.Expect(new Regex(@"[$>]"));
-            logger.LogInformation("Connect To WiFi? {WiFiCommand}", output);
-        }
-
-        logger.LogInformation("Fetch my IPs");
-        shellStream.WriteLine(
-            @"ifconfig | grep 'inet '| sed -e 's/^ *inet \([0-9.]*\) .*$/\1/g'");
-        Thread.Sleep(TimeSpan.FromSeconds(1));
-        output = shellStream.Expect(new Regex(@"[$>]"));
-        logger.LogInformation("xterm: {output}", output);
-        myIps.AddRange(output.Split(Environment.NewLine)
-            .Where(x=>IPAddress.TryParse(x, out _)));
-        client.Disconnect();
-        client.Dispose();
+        return myIps.OrderByDescending(x => x).Select(x => (IPAddress.Parse(x), IPAddress.Parse("255.255.255.0")))
+            .ToArray();
     }
 
     private void ExposeVersionToTraces(string sn)
@@ -168,10 +92,7 @@ public class GoodWeFetcher : BackgroundService
         foreach (var adr in myIps)
         {
             var match = Regex.IsMatch(adr, "\\d+\\.\\d+\\.\\d+\\.\\d+");
-            if (match)
-            {
-                gaugeIp.WithLabels(sn, adr).Set(1);
-            }
+            if (match) gaugeIp.WithLabels(sn, adr).Set(1);
         }
     }
 
