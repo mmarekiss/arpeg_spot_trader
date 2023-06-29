@@ -113,9 +113,11 @@ public class GoodWeFetcher : BackgroundService
         var output = shellStream.Expect(new Regex(@"rockpi"));
         output = shellStream.Expect(new Regex(@"[$>]"));
         logger.LogInformation("xterm: {output}", output);
+        logger.LogInformation("Connected to SSH");
         shellStream.WriteLine("nmcli -f ssid dev wifi");
         output = shellStream.Expect(new Regex(@"[$>]"));
         logger.LogInformation("xterm: {output}", output);
+        logger.LogInformation("WiFi loaded");
         if (output.Contains("Solar"))
         {
             shellStream.WriteLine(
@@ -125,8 +127,9 @@ public class GoodWeFetcher : BackgroundService
             logger.LogInformation("xterm: {output}", output);
             output = shellStream.Expect(new Regex(@"[$>]"));
             logger.LogInformation("xterm: {output}", output);
+            logger.LogInformation("Logger ID updated");
         }
-
+        logger.LogInformation("Check WiFi state");
         shellStream.WriteLine("nmcli device | grep Solar");
         Thread.Sleep(TimeSpan.FromSeconds(1));
         output = shellStream.Expect(new Regex(@"[$>]"));
@@ -145,6 +148,7 @@ public class GoodWeFetcher : BackgroundService
             logger.LogInformation("Connect To WiFi? {WiFiCommand}", output);
         }
 
+        logger.LogInformation("Fetch my IPs");
         shellStream.WriteLine(
             @"ifconfig | grep 'inet '| sed -e 's/^ *inet \([0-9.]*\) .*$/\1/g'");
         Thread.Sleep(TimeSpan.FromSeconds(1));
