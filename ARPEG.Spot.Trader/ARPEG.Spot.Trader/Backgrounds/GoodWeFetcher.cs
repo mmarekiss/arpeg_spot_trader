@@ -109,7 +109,9 @@ public class GoodWeFetcher : BackgroundService
 
         var shellStream =
             client.CreateShellStream("xterm", 80, 24, 800, 600, 1024, modes);
-        var output = shellStream.Expect(new Regex(@"[$>]"));
+        Thread.Sleep(TimeSpan.FromSeconds(1));
+        var output = shellStream.Expect(new Regex(@"rockpi"));
+        output = shellStream.Expect(new Regex(@"[$>]"));
         logger.LogInformation("xterm: {output}", output);
         shellStream.WriteLine("nmcli -f ssid dev wifi");
         output = shellStream.Expect(new Regex(@"[$>]"));
@@ -119,6 +121,8 @@ public class GoodWeFetcher : BackgroundService
             shellStream.WriteLine(
                 "nmcli -f ssid dev wifi | grep Solar | sed 's/ *$//g' | head -1 |xargs -I % sed -i s/arpeg-1/arpeg-%/g promtailconfig.yml");
             Thread.Sleep(TimeSpan.FromSeconds(1));
+            output = shellStream.Expect(new Regex(@"[$>]"));
+            logger.LogInformation("xterm: {output}", output);
             output = shellStream.Expect(new Regex(@"[$>]"));
             logger.LogInformation("xterm: {output}", output);
         }
