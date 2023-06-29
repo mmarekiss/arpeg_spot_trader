@@ -1,8 +1,6 @@
 ﻿using System.Net;
 using System.Net.NetworkInformation;
-using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging;
-using Renci.SshNet;
 using TecoBridge.GoodWe;
 
 namespace ARPEG.Spot.Trader.Utils;
@@ -18,10 +16,10 @@ public class GoodWeFinder
         _goodWe = goodWe;
         _logger = logger;
     }
-    
+
     public bool PingHost(string nameOrAddress)
     {
-        bool pingable = false;
+        var pingable = false;
         Ping pinger = null;
 
         pinger = new Ping();
@@ -44,8 +42,8 @@ public class GoodWeFinder
             _logger.LogError("Cannot connect to Inverter at address {Address}", address);
             await Task.Delay(TimeSpan.FromSeconds(10));
             var result = PingHost(address.ToString());
-            if(!result)
-                return("", IPAddress.None);
+            if (!result)
+                return ("", IPAddress.None);
         }
 
         return ("", IPAddress.None);
@@ -70,13 +68,15 @@ public class GoodWeFinder
                                 {
                                     result.Add((sn, ip));
                                 }
+                            else
+                                _logger.LogInformation($"{ip} is not GoodWe");
                         }
                         catch
                         {
                             _logger.LogInformation($"{ip} is not GoodWe");
                         }
                 }));
-            
+
             await Task.WhenAll(findTasks.ToArray());
             foreach (var r in result) yield return r;
             result.Clear();

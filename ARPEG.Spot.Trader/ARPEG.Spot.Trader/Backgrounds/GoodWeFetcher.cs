@@ -41,7 +41,7 @@ public class GoodWeFetcher : BackgroundService
         this.logger = logger;
         this.serviceProvider = serviceProvider;
         this.version = GetType().Assembly.GetName().Version ?? new Version(0, 0); 
-        
+        this.logger.LogInformation("Start application with version [{Version}]", version);
         gauge = Metrics.CreateGauge("Version", "GoodWe traced value", new GaugeConfiguration { LabelNames = new[] { "sn", "part" } });
         gaugeIp = Metrics.CreateGauge("IP", "trader IP", new GaugeConfiguration { LabelNames = new[] { "sn", "ip" } });
     }
@@ -57,18 +57,18 @@ public class GoodWeFetcher : BackgroundService
 
         if (IPAddress.TryParse(goodWeConfig.Value.Ip, out var ipAddress))
         {
-            (string SN, IPAddress address) goodWee;
+            (string SN, IPAddress? address) goodWee;
             do
             {
                 ConnectWiFi(login, password);
 
                 goodWee = await finder.GetGoodWe(ipAddress, stoppingToken);
-                if ( goodWee.address.Equals(IPAddress.None))
+                if ( goodWee.address?.Equals(IPAddress.None) == true)
                 {
                     goodWee = await finder.FindGoodWees(GetIpsFromHost()).FirstOrDefaultAsync(stoppingToken);
                 }
 
-            } while (goodWee.address.Equals(IPAddress.None));
+            } while (goodWee.address?.Equals(IPAddress.None) != false);
 
             await RunTrader(goodWee.SN, goodWee.address, stoppingToken);
         }
