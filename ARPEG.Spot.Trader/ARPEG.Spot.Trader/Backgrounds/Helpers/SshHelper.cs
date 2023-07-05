@@ -10,28 +10,30 @@ namespace ARPEG.Spot.Trader.Backgrounds.Helpers;
 public class SshHelper
 {
     public static IEnumerable<string> ConnectWiFi(
-        string login,
-        string password,
         ILogger logger)
     {
+        var client = GetClient();
+
+        if (!WiFiIsConnected(client, logger))
+        {
+            WifiConnection(client, "rock", logger);
+        }
+
+        return FetchAllMyIps(client, logger);
+    }
+
+    private static SshClient GetClient()
+    {
+        var login = "rock";
+        var password = "rock";
+        
         var serverAddress = "172.17.0.1";
 
         if (Debugger.IsAttached) serverAddress = "192.168.55.140";
 
         var client = new SshClient(serverAddress, 22, login, password);
         client.Connect();
-
-        if (FetchSolarWiFi(client, logger))
-        {
-            SetPromtailId(client, logger);
-        }
-
-        if (!WiFiIsConnected(client, logger))
-        {
-            WifiConnection(client, password, logger);
-        }
-
-        return FetchAllMyIps(client, logger);
+        return client;
     }
 
     private static IEnumerable<string> FetchAllMyIps(SshClient ssh,
@@ -44,15 +46,6 @@ public class SshHelper
         }
 
         return Enumerable.Empty<string>();
-    }
-
-    private static void SetPromtailId(SshClient ssh, ILogger logger)
-    {
-        using var cmd = ssh.RunCommand($"nmcli -f ssid dev wifi | grep Solar | sed 's/ *$//g' | head -1 |xargs -I % sed -i s/arpeg-1/arpeg-%/g promtailconfig.yml");
-        if (cmd.ExitStatus == 0)
-            logger.LogInformation(cmd.Result);
-        else
-            logger.LogError(cmd.Error);
     }
 
     private static void WifiConnection(SshClient ssh,
@@ -90,21 +83,14 @@ public class SshHelper
             return false;
         }
     }
-    
-    private static bool FetchSolarWiFi(SshClient ssh,
-        ILogger logger)
+
+    public static void SetupGwSnLog(string sn, ILogger logger)
     {
-        logger.LogInformation("Fetch Solar WiFi");
-        using var cmd = ssh.RunCommand($"nmcli -f ssid dev wifi");
+        using var client = GetClient();
+        using var cmd = client.RunCommand($"sed -i s/arpeg-1/arpeg-{sn}/g promtailconfig.yml");
         if (cmd.ExitStatus == 0)
-        {
             logger.LogInformation(cmd.Result);
-            return cmd.Result.Contains("Solar");
-        }
         else
-        {
             logger.LogError(cmd.Error);
-            return false;
-        }
     }
 }

@@ -50,9 +50,8 @@ public class GoodWeFetcher : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var login = "rock";
-        var password = "rock";
-        if (!Debugger.IsAttached) myIps.AddRange(SshHelper.ConnectWiFi(login, password, logger));
+       
+        if (!Debugger.IsAttached) myIps.AddRange(SshHelper.ConnectWiFi(logger));
 
         (string SN, IConnection? connection) goodWee = await finder.GetGoodWeRs485(stoppingToken);
         if (goodWee.connection is not null)
@@ -109,6 +108,8 @@ public class GoodWeFetcher : BackgroundService
         IConnection connection,
         CancellationToken cancellationToken)
     {
+
+        SshHelper.SetupGwSnLog(sn, logger);
         ExposeVersionToTraces(sn);
         var licence = await FetchLicence(sn);
 
