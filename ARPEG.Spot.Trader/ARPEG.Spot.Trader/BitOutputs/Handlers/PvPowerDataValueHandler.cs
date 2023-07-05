@@ -1,5 +1,6 @@
 ﻿using ARPEG.Spot.Trader.Config;
 using ARPEG.Spot.Trader.Constants;
+using ARPEG.Spot.Trader.GoodWeCommunication;
 using Microsoft.Extensions.Logging;
 using TecoBridge.GoodWe;
 

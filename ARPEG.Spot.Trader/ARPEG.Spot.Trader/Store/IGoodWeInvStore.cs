@@ -1,4 +1,5 @@
-﻿using TecoBridge.GoodWe;
+﻿using ARPEG.Spot.Trader.GoodWeCommunication;
+using TecoBridge.GoodWe;
 
 namespace ARPEG.Spot.Trader.Store;
 

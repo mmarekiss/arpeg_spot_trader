@@ -1,4 +1,5 @@
 ﻿using ARPEG.Spot.Trader.Config;
+using ARPEG.Spot.Trader.GoodWeCommunication;
 using TecoBridge.GoodWe;
 
 namespace ARPEG.Spot.Trader.BitOutputs.Handlers;
