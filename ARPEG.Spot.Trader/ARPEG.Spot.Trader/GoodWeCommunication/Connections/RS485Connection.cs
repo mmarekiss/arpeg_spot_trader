@@ -11,6 +11,8 @@ public class RS485Connection : IConnection
 {
     private readonly ILogger<RS485Connection> logger;
 
+    private SerialPort? SerialPort { get; set; }
+
     public RS485Connection(ILogger<RS485Connection> logger)
     {
         this.logger = logger;
@@ -20,9 +22,8 @@ public class RS485Connection : IConnection
     public async Task<byte[]> Send(byte[] message, CancellationToken cancellationToken)
     {  
         var client = GetClient();
-        try
-        {
-            client.Open();
+      
+            
             client.Write(message, 0, message.Length);
 
             await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
@@ -50,15 +51,17 @@ public class RS485Connection : IConnection
                 logger.LogInformation("Timeout: IsCompleted=>{completed}", response.Length > 0);
                 throw new TimeoutException();
             }
-        }
-        finally
-        {
-            client?.Dispose();
-        }
+    
     }
 
-    private static SerialPort GetClient()
+    private SerialPort GetClient()
     {
-        return new SerialPort("COM3", 9600, Parity.None, 8, StopBits.One);
+        if (SerialPort?.IsOpen != true)
+        {
+            SerialPort?.Dispose();
+            SerialPort = new SerialPort("COM3", 9600, Parity.None, 8, StopBits.One);
+            SerialPort.Open();
+        }
+        return SerialPort;
     }
 }
