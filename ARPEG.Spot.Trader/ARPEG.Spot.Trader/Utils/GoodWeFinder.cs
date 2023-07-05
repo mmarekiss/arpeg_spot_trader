@@ -1,5 +1,7 @@
 ﻿using System.Net;
 using System.Net.NetworkInformation;
+using ARPEG.Spot.Trader.GoodWeCommunication.Connections;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using TecoBridge.GoodWe;
 
@@ -7,52 +9,80 @@ namespace ARPEG.Spot.Trader.Utils;
 
 public class GoodWeFinder
 {
-    private readonly GoodWeCom _goodWe;
-    private readonly ILogger<GoodWeFinder> _logger;
+    private readonly GoodWeCom goodWe;
+    private readonly ILogger<GoodWeFinder> logger;
+    private readonly IServiceProvider serviceProvider;
+
 
     public GoodWeFinder(GoodWeCom goodWe,
-        ILogger<GoodWeFinder> logger)
+        ILogger<GoodWeFinder> logger,
+        IServiceProvider serviceProvider)
     {
-        _goodWe = goodWe;
-        _logger = logger;
+        this.goodWe = goodWe;
+        this.logger = logger;
+        this.serviceProvider = serviceProvider;
     }
 
     public bool PingHost(string nameOrAddress)
     {
         var pingable = false;
-        Ping pinger = null;
 
-        pinger = new Ping();
+        var pinger = new Ping();
         var reply = pinger.Send(nameOrAddress);
         pingable = reply.Status == IPStatus.Success;
 
-        _logger.LogError("{Address} is reachable {Reachable}", nameOrAddress, pingable);
+        logger.LogError("{Address} is reachable {Reachable}", nameOrAddress, pingable);
 
         return pingable;
     }
 
-    public async Task<(string SN, IPAddress address)> GetGoodWe(IPAddress address,
+    public async Task<(string SN, IConnection?)> GetGoodWeRs485(CancellationToken cancellationToken)
+    {
+        var rs485Connection = ActivatorUtilities.CreateInstance<RS485Connection>(serviceProvider);
+
+        logger.LogInformation("Try check address RS485");
+        try
+        {
+            var (sn, connection) = await goodWe.GetInverterName(rs485Connection);
+            if (!string.IsNullOrWhiteSpace(sn))
+                return (sn, connection);
+            logger.LogError("Cannot connect to Inverter at address RS485");
+        }
+        catch (Exception exc)
+        {
+            logger.LogInformation("RS485 not found");
+        }
+
+        return ("", null);
+    }
+
+    public async Task<(string SN, IConnection?)> GetGoodWe(IPAddress address,
         CancellationToken cancellationToken)
     {
         while (!cancellationToken.IsCancellationRequested)
         {
-            var sn = await _goodWe.GetInverterName(address);
+            var udpConnection = ActivatorUtilities.CreateInstance<UdpConnection>(serviceProvider);
+
+            udpConnection.Init(address);
+
+            logger.LogInformation("Try check address {0}", address);
+            var (sn, connection) = await goodWe.GetInverterName(udpConnection);
             if (!string.IsNullOrWhiteSpace(sn))
-                return (sn, address);
-            _logger.LogError("Cannot connect to Inverter at address {Address}", address);
-            await Task.Delay(TimeSpan.FromSeconds(10));
+                return (sn, connection);
+            logger.LogError("Cannot connect to Inverter at address {Address}", address);
+            await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken);
             var result = PingHost(address.ToString());
             if (!result)
-                return ("", IPAddress.None);
+                return ("", null);
         }
 
-        return ("", IPAddress.None);
+        return ("", null);
     }
 
-    public async IAsyncEnumerable<(string SN, IPAddress address)> FindGoodWees(
+    public async IAsyncEnumerable<(string SN, IConnection connection)> FindGoodWees(
         params (IPAddress address, IPAddress mask)[] ips)
     {
-        var result = new List<(string SN, IPAddress address)>();
+        var result = new List<(string SN, IConnection connection)>();
         var findTasks = new List<Task>();
         foreach (var iface in ips)
         {
@@ -62,18 +92,23 @@ public class GoodWeFinder
                     foreach (var ip in chunk)
                         try
                         {
-                            var sn = await _goodWe.GetInverterName(ip);
-                            if (!string.IsNullOrWhiteSpace(sn))
-                                lock (result)
+                            var udpConnection = ActivatorUtilities.CreateInstance<UdpConnection>(serviceProvider);
+
+                            udpConnection.Init(ip);
+                            logger.LogInformation("Try check address {0}", ip);
+                            var connection = await goodWe.GetInverterName(udpConnection);
+                            
+                            if (!string.IsNullOrWhiteSpace(connection.sn) && connection.connection is not null)
+                                lock (connection.sn)
                                 {
-                                    result.Add((sn, ip));
+                                    result.Add((connection.sn, connection.connection));
                                 }
                             else
-                                _logger.LogInformation($"{ip} is not GoodWe");
+                                logger.LogInformation($"{ip} is not GoodWe");
                         }
                         catch
                         {
-                            _logger.LogInformation($"{ip} is not GoodWe");
+                            logger.LogInformation($"{ip} is not GoodWe");
                         }
                 }));
 

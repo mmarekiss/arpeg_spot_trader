@@ -1,9 +1,8 @@
-﻿using System.Device.Gpio.Drivers;
-using System.Net;
-using System.Net.Sockets;
-using System.Text;
+﻿using System.Text;
 using ARPEG.Spot.Trader.BitOutputs;
 using ARPEG.Spot.Trader.Constants;
+using ARPEG.Spot.Trader.GoodWeCommunication;
+using ARPEG.Spot.Trader.GoodWeCommunication.Connections;
 using Microsoft.Extensions.Logging;
 using Prometheus;
 
@@ -11,29 +10,19 @@ namespace TecoBridge.GoodWe;
 
 public class GoodWeCom
 {
-    private readonly Dictionary<string, Gauge> _gauges = new();
-    private readonly ILogger<GoodWeCom> _logger;
-    private readonly IEnumerable<IBitController> _bitControllers;
+    private readonly IEnumerable<IBitController> bitControllers;
+    private readonly Dictionary<string, Gauge> gauges = new();
+    private readonly ILogger<GoodWeCom> logger;
 
     public GoodWeCom(ILogger<GoodWeCom> logger,
         IEnumerable<IBitController> bitControllers)
     {
-        _logger = logger;
-        _bitControllers = bitControllers;
+        this.logger = logger;
+        this.bitControllers = bitControllers;
     }
 
-
-    private UdpClient GetClient(IPAddress address)
+    public async Task<(string? sn, IConnection? connection)> GetInverterName(IConnection connection)
     {
-        var client = new UdpClient();
-        client.Connect(address, 8899);
-        return client;
-    }
-
-
-    public async Task<string?> GetInverterName(IPAddress address)
-    {
-        _logger.LogInformation("Try check address {0}", address);
         ushort minAddress = 35003;
         var reqRegisters = 8;
         var arr = new byte[]
@@ -43,32 +32,17 @@ public class GoodWeCom
 
         arr = arr.Concat(BitConverter.GetBytes(crc)).ToArray();
 
-        using var client = GetClient(address);
-        await client.SendAsync(arr);
-
-
-        var response = client.ReceiveAsync();
-
-        await Task.Delay(TimeSpan.FromMilliseconds(300));
-
-        if (response is { IsCompleted: true, Result.Buffer.Length: > 0 })
+        try
         {
-            var startIndex = 5;
-            var value = new byte[16];
-            if (response.Result.Buffer.Length > startIndex)
-            {
-                Array.Copy(response.Result.Buffer, startIndex, value, 0, 16);
-                return Encoding.ASCII.GetString(value);
-            }
-
-            _logger.LogInformation("SerialNumber: Too short buffer");
+            var value = await connection.Send(arr, default);
+            return (Encoding.ASCII.GetString(value), connection);
         }
-        else
+        catch (TimeoutException exception)
         {
-            _logger.LogInformation("Timeout: IsCompleted=>{completed}", response.IsCompleted);
+            logger.LogInformation(exception, "This is not GW");
         }
 
-        return null;
+        return (null, null);
     }
 
     public async Task SetExportLimit(ushort limit,
@@ -93,7 +67,7 @@ public class GoodWeCom
         await SetUint16Value(47512, chargePower, definition, cancellationToken);
         await SetUint16Value(47511, 2, definition, cancellationToken);
     }
-    
+
     public async Task ForceBatteryDisCharge(Definition definition,
         ushort chargePower,
         CancellationToken cancellationToken)
@@ -112,7 +86,7 @@ public class GoodWeCom
         Definition definition,
         CancellationToken cancellationToken)
     {
-        _logger.LogInformation("=============================");
+        logger.LogInformation("=============================");
         await GetInt16Values(
             definition,
             new DataPoint("Grid", "L1", 36020, Max: 10_000),
@@ -185,18 +159,18 @@ public class GoodWeCom
 
         await GetInt16Values(
             definition,
-            new DataPoint("Feed", "L1", 35125, -10, Max: 10_000),
-            new DataPoint("Feed", "L2", 35130, -10, Max: 10_000),
-            new DataPoint("Feed", "L3", 35135, -10, Max: 10_000),
-            new DataPoint("Feed", "Total", 35138, -10, Max: 10_000)
+            new DataPoint("Feed", "L1", 35125, -10, 10_000),
+            new DataPoint("Feed", "L2", 35130, -10, 10_000),
+            new DataPoint("Feed", "L3", 35135, -10, 10_000),
+            new DataPoint("Feed", "Total", 35138, -10, 10_000)
         ).ToListAsync(cancellationToken);
 
         await GetInt16Values(
             definition,
-            new DataPoint("Consumption", "L1", 35164, 0, Max: 10_000),
-            new DataPoint("Consumption", "L2", 35166, 0, Max: 10_000),
-            new DataPoint("Consumption", "L3", 35168, 0, Max: 10_000),
-            new DataPoint("Consumption", "Total", 35172, 0, Max: 10_000)
+            new DataPoint("Consumption", "L1", 35164, 0, 10_000),
+            new DataPoint("Consumption", "L2", 35166, 0, 10_000),
+            new DataPoint("Consumption", "L3", 35168, 0, 10_000),
+            new DataPoint("Consumption", "Total", 35172, 0, 10_000)
         ).ToListAsync(cancellationToken);
 
         var data = await GetInt16Values(
@@ -210,10 +184,9 @@ public class GoodWeCom
         ).ToListAsync(cancellationToken);
 
         var sum = data.Where(x => x.part == PVGroupParts.PV2_Wats || x.part == PVGroupParts.PV1_Wats).Sum(x => x.value);
-        foreach (var bitController in _bitControllers)
-        {
-            _ = bitController.HandleDataValue(definition, new DataValue(0, DataGroupNames.PV, PVGroupParts.Wats, (short)sum));
-        }
+        foreach (var bitController in bitControllers)
+            _ = bitController.HandleDataValue(definition,
+                new DataValue(0, DataGroupNames.PV, PVGroupParts.Wats, (short)sum));
         await GetInt16Values(
             definition,
             new DataPoint(DataGroupNames.Temperature, TemperatureGroupParts.Temperature_Air, 35174, 0, 800),
@@ -229,14 +202,14 @@ public class GoodWeCom
         short value)
     {
         var id = $"{group}";
-        if (!_gauges.TryGetValue(id, out var gauge))
-            _gauges.Add(group, gauge = Metrics.CreateGauge(group.Replace(" ", "_"), "GoodWe traced value",
+        if (!gauges.TryGetValue(id, out var gauge))
+            gauges.Add(group, gauge = Metrics.CreateGauge(group.Replace(" ", "_"), "GoodWe traced value",
                 new GaugeConfiguration
                 {
                     LabelNames = new[] { "part", "sn" }
                 }));
 
-        gauge?.WithLabels(part, definition.SN).Set(value);
+        gauge?.WithLabels(part, definition.Sn).Set(value);
     }
 
     private async Task SetUint16Value(ushort address,
@@ -251,8 +224,7 @@ public class GoodWeCom
 
         arr = arr.Concat(BitConverter.GetBytes(crc)).ToArray();
 
-        using var client = GetClient(definition.Address);
-        await client.SendAsync(arr, cancellationToken);
+        await definition.Connection.Send(arr, cancellationToken);
     }
 
     private async IAsyncEnumerable<DataValue> GetInt16Values(
@@ -271,44 +243,44 @@ public class GoodWeCom
 
         arr = arr.Concat(BitConverter.GetBytes(crc)).ToArray();
 
-        using var client = GetClient(definition.Address);
-        await client.SendAsync(arr);
-
-        var response = client.ReceiveAsync();
-        var retry = 50;
-        while (retry > 0 && !response.IsCompleted)
+        byte[] response;
+        try
         {
-            await Task.Delay(TimeSpan.FromMilliseconds(100));
-            retry--;
+            response = await definition.Connection.Send(arr, default);
+        }
+        catch (TimeoutException exc)
+        {
+            logger.LogWarning("Timeout");
+            yield break;
         }
 
-        if (response is { IsCompleted: true, Result.Buffer.Length: > 0 })
+
+        if (response.Length > 0)
             foreach (var point in points)
             {
                 var value = new byte[2];
-                var startIndex = 5 + (point.Address - minAddress) * 2;
-                if (response.Result.Buffer.Length > startIndex + 1)
+                var startIndex = (point.Address - minAddress) * 2;
+                if (response.Length > startIndex + 1)
                 {
-                    Array.Copy(response.Result.Buffer, startIndex, value, 0, 2);
+                    Array.Copy(response, startIndex, value, 0, 2);
                     var result = BitConverter.ToInt16(value.Reverse().ToArray());
                     result = FitLimits(result, point);
-                    _logger.LogTrace($"{point.Description}: {result}");
+                    logger.LogTrace($"{point.Description}: {result}");
                     TraceGauge(definition, point.Group, point.Description, result);
-                    var resultValue = new DataValue(point.Address, point.Group, point.Description, FitLimits(result, point));
-                    foreach (var bitController in _bitControllers)
-                    {
+                    var resultValue = new DataValue(point.Address, point.Group, point.Description,
+                        FitLimits(result, point));
+                    foreach (var bitController in bitControllers)
                         _ = bitController.HandleDataValue(definition, resultValue);
-                    }
 
                     yield return resultValue;
                 }
                 else
                 {
-                    _logger.LogInformation($"{point.Description}: Too short buffer");
+                    logger.LogInformation($"{point.Description}: Too short buffer");
                 }
             }
         else
-            _logger.LogInformation("Timeout");
+            logger.LogInformation("Timeout");
     }
 
     private short FitLimits(short result,
@@ -320,5 +292,4 @@ public class GoodWeCom
             return (short)point.Max.Value;
         return result;
     }
-    
 }

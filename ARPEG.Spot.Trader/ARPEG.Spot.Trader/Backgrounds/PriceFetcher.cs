@@ -1,5 +1,6 @@
 ﻿using System.Net.Http.Json;
 using ARPEG.Spot.Trader.Config;
+using ARPEG.Spot.Trader.GoodWeCommunication;
 using ARPEG.Spot.Trader.Integration;
 using ARPEG.Spot.Trader.Services;
 using ARPEG.Spot.Trader.Store;
@@ -138,7 +139,7 @@ public class PriceFetcher : BackgroundService
     {
         foreach (var gw in invStore.GoodWes.Where(g => g.Licence.HasFlag(LicenceVersion.Spot)))
         {
-            var batteryManagement = await FetchBatteryCommand(gw.SN, stoppingToken);
+            var batteryManagement = await FetchBatteryCommand(gw.Sn, stoppingToken);
             switch (batteryManagement?.BatteryManagement)
             {
                 case BatteryManagement.ForceCharge:

@@ -1,6 +1,7 @@
 ﻿using System.Device.Gpio;
 using ARPEG.Spot.Trader.BitOutputs.Handlers;
 using ARPEG.Spot.Trader.Config;
+using ARPEG.Spot.Trader.GoodWeCommunication;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Prometheus;
@@ -38,7 +39,7 @@ public class BitController<TOptions> : IBitController, IDisposable
     public Task HandleDataValue(Definition inverterDefinition,
         DataValue dataValue)
     {
-        if (inverterDefinition.SN != _options.GwSn) return Task.CompletedTask;
+        if (inverterDefinition.Sn != _options.GwSn) return Task.CompletedTask;
         
         var handler = _handlers.FirstOrDefault(x => x.Type == _options.DriverType);
 

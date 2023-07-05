@@ -1,4 +1,4 @@
-﻿namespace TecoBridge.GoodWe;
+﻿namespace ARPEG.Spot.Trader.GoodWeCommunication;
 
 public record DataValue(ushort address,
     string group,

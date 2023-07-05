@@ -4,6 +4,8 @@ using System.Net.Http.Json;
 using System.Text.RegularExpressions;
 using ARPEG.Spot.Trader.Backgrounds.Helpers;
 using ARPEG.Spot.Trader.Config;
+using ARPEG.Spot.Trader.GoodWeCommunication;
+using ARPEG.Spot.Trader.GoodWeCommunication.Connections;
 using ARPEG.Spot.Trader.Integration;
 using ARPEG.Spot.Trader.Store;
 using ARPEG.Spot.Trader.Utils;
@@ -48,23 +50,36 @@ public class GoodWeFetcher : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+            (string SN, IConnection? connection) goodWee = await finder.GetGoodWeRs485(stoppingToken);
+            if (goodWee.connection is not null)
+            {
+                await RunTrader(goodWee.SN, goodWee.connection, stoppingToken);
+            }
+            else
+            {
+                await RunGoodWeAtUdp(stoppingToken);
+            }
+    }
+
+    private async Task RunGoodWeAtUdp(CancellationToken stoppingToken)
+    {
         var login = "rock";
         var password = "rock";
-        if (!Debugger.IsAttached)  myIps.AddRange(SshHelper.ConnectWiFi(login, password, logger));
+        if (!Debugger.IsAttached) myIps.AddRange(SshHelper.ConnectWiFi(login, password, logger));
 
         if (IPAddress.TryParse(goodWeConfig.Value.Ip, out var ipAddress))
         {
-            (string SN, IPAddress? address) goodWee;
+            (string SN, IConnection? connection) goodWee;
             do
             {
                 myIps.AddRange(SshHelper.ConnectWiFi(login, password, logger));
 
                 goodWee = await finder.GetGoodWe(ipAddress, stoppingToken);
-                if (goodWee.address?.Equals(IPAddress.None) == true)
+                if (goodWee.connection is null)
                     goodWee = await finder.FindGoodWees(GetIpsFromHost()).FirstOrDefaultAsync(stoppingToken);
-            } while (goodWee.address?.Equals(IPAddress.None) != false);
+            } while (goodWee.connection is null);
 
-            await RunTrader(goodWee.SN, goodWee.address, stoppingToken);
+            await RunTrader(goodWee.SN, goodWee.connection, stoppingToken);
         }
         else
         {
@@ -72,8 +87,8 @@ public class GoodWeFetcher : BackgroundService
             await foreach (var goodWee in finder.FindGoodWees(addresses)
                                .WithCancellation(stoppingToken))
             {
-                logger.LogInformation("Found GoodWe at {Ip}", goodWee.address);
-                await RunTrader(goodWee.SN, goodWee.address, stoppingToken);
+                logger.LogInformation("Found GoodWe at {Ip}", goodWee.connection);
+                await RunTrader(goodWee.SN, goodWee.connection, stoppingToken);
             }
         }
     }
@@ -97,7 +112,7 @@ public class GoodWeFetcher : BackgroundService
     }
 
     private async Task RunTrader(string sn,
-        IPAddress address,
+        IConnection connection,
         CancellationToken cancellationToken)
     {
         ExposeVersionToTraces(sn);
@@ -107,12 +122,7 @@ public class GoodWeFetcher : BackgroundService
         {
             logger.LogWarning("Your licence for {name} is {lic}", sn, licence.LicenceVersion.ToString());
 
-            var definition = new Definition
-            {
-                SN = sn,
-                Address = address,
-                Licence = licence.LicenceVersion
-            };
+            var definition = new Definition(sn, licence.LicenceVersion, connection);
             invStore.AddGoodWe(definition);
             var communicator = serviceProvider.GetService<GoodWeCom>() ??
                                throw new ApplicationException("please define goodWe comm");
