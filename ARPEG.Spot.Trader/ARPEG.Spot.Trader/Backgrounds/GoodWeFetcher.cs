@@ -50,30 +50,24 @@ public class GoodWeFetcher : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-            (string SN, IConnection? connection) goodWee = await finder.GetGoodWeRs485(stoppingToken);
-            if (goodWee.connection is not null)
-            {
-                await RunTrader(goodWee.SN, goodWee.connection, stoppingToken);
-            }
-            else
-            {
-                await RunGoodWeAtUdp(stoppingToken);
-            }
-    }
-
-    private async Task RunGoodWeAtUdp(CancellationToken stoppingToken)
-    {
         var login = "rock";
         var password = "rock";
         if (!Debugger.IsAttached) myIps.AddRange(SshHelper.ConnectWiFi(login, password, logger));
 
+        (string SN, IConnection? connection) goodWee = await finder.GetGoodWeRs485(stoppingToken);
+        if (goodWee.connection is not null)
+            await RunTrader(goodWee.SN, goodWee.connection, stoppingToken);
+        else
+            await RunGoodWeAtUdp(stoppingToken);
+    }
+
+    private async Task RunGoodWeAtUdp(CancellationToken stoppingToken)
+    {
         if (IPAddress.TryParse(goodWeConfig.Value.Ip, out var ipAddress))
         {
             (string SN, IConnection? connection) goodWee;
             do
             {
-                myIps.AddRange(SshHelper.ConnectWiFi(login, password, logger));
-
                 goodWee = await finder.GetGoodWe(ipAddress, stoppingToken);
                 if (goodWee.connection is null)
                     goodWee = await finder.FindGoodWees(GetIpsFromHost()).FirstOrDefaultAsync(stoppingToken);
