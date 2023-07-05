@@ -1,9 +1,6 @@
-﻿using System.IO.Ports;
-using System.Net;
-using System.Net.Sockets;
-using System.Text;
+﻿using System.Diagnostics;
+using System.IO.Ports;
 using Microsoft.Extensions.Logging;
-using SshNet.Security.Cryptography;
 
 namespace ARPEG.Spot.Trader.GoodWeCommunication.Connections;
 
@@ -59,7 +56,10 @@ public class RS485Connection : IConnection
         if (SerialPort?.IsOpen != true)
         {
             SerialPort?.Dispose();
-            SerialPort = new SerialPort("COM3", 9600, Parity.None, 8, StopBits.One);
+            var portName = "/dev/ttyUSB0";
+            if (Debugger.IsAttached)
+                portName = "COM3";
+            SerialPort = new SerialPort(portName, 9600, Parity.None, 8, StopBits.One);
             SerialPort.Open();
         }
         return SerialPort;
