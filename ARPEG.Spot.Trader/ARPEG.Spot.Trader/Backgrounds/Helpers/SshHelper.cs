@@ -87,7 +87,8 @@ public class SshHelper
     public static void SetupGwSnLog(string sn, ILogger logger)
     {
         using var client = GetClient();
-        using var cmd = client.RunCommand($"sed -i s/arpeg-1/arpeg-{sn}/g promtailconfig.yml");
+        sn = sn.Replace(" ", "");
+        using var cmd = client.RunCommand($"sed -i 's/tradersn: .*$/tradersn: {sn}/g' promtailconfig.yml");
         if (cmd.ExitStatus == 0)
             logger.LogInformation(cmd.Result);
         else
