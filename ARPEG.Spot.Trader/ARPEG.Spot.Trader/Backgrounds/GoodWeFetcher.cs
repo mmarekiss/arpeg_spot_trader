@@ -51,7 +51,7 @@ public class GoodWeFetcher : BackgroundService
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
        
-        if (!Debugger.IsAttached) myIps.AddRange(SshHelper.ConnectWiFi(logger));
+        myIps.AddRange(SshHelper.ConnectWiFi(logger));
 
         (string SN, IConnection? connection) goodWee = await finder.GetGoodWeRs485(stoppingToken);
         if (goodWee.connection is not null)

@@ -90,6 +90,9 @@ public class GoodWeFinder
                 findTasks.Add(Task.Run(async () =>
                 {
                     foreach (var ip in chunk)
+                    {
+                        if (result.Any())
+                            return; //Stop when somebody found GW
                         try
                         {
                             var udpConnection = ActivatorUtilities.CreateInstance<UdpConnection>(serviceProvider);
@@ -97,11 +100,13 @@ public class GoodWeFinder
                             udpConnection.Init(ip);
                             logger.LogInformation("Try check address {0}", ip);
                             var connection = await goodWe.GetInverterName(udpConnection);
-                            
+
                             if (!string.IsNullOrWhiteSpace(connection.sn) && connection.connection is not null)
                                 lock (connection.sn)
                                 {
+                                    logger.LogInformation($"{ip} found GoodWe {connection.sn}");
                                     result.Add((connection.sn, connection.connection));
+                                    return;
                                 }
                             else
                                 logger.LogInformation($"{ip} is not GoodWe");
@@ -110,6 +115,7 @@ public class GoodWeFinder
                         {
                             logger.LogInformation($"{ip} is not GoodWe");
                         }
+                    }
                 }));
 
             await Task.WhenAll(findTasks.ToArray());
