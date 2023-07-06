@@ -119,8 +119,13 @@ public class GoodWeFinder
                 }));
 
             await Task.WhenAll(findTasks.ToArray());
-            foreach (var r in result) yield return r;
+            foreach (var r in result)
+            {
+                yield return r;
+                yield break;
+            }
             result.Clear();
+            
         }
     }
 
