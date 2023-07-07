@@ -52,6 +52,7 @@ public class GoodWeFetcher : BackgroundService
     {
        
         myIps.AddRange(SshHelper.ConnectWiFi(logger));
+        ExposeVersionToTraces($"STARTUP-{Guid.NewGuid()}");
 
         (string SN, IConnection? connection) goodWee = await finder.GetGoodWeRs485(stoppingToken);
         if (goodWee.connection is not null)
