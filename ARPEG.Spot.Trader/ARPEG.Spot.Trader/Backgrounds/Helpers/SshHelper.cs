@@ -42,6 +42,7 @@ public class SshHelper
         using var cmd = ssh.RunCommand(@$"ifconfig | grep -C1 -E 'eth0|p2p0' | grep 'inet '| sed -e 's/^ *inet \([0-9.]*\) .*$/\1/g'");
         if (cmd.ExitStatus == 0)
         {
+            logger.LogInformation("My IPs {ips}", cmd.Result);
             return cmd.Result.Split('\n').Where(x => IPAddress.TryParse(x, out _));
         }
 
