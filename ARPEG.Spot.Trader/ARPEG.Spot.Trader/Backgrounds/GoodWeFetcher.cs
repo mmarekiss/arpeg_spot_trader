@@ -50,7 +50,7 @@ public class GoodWeFetcher : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-       
+        SshHelper.SetupTemporalLog(logger);
         myIps.AddRange(SshHelper.ConnectWiFi(logger));
         ExposeVersionToTraces($"STARTUP-{Guid.NewGuid()}");
 
