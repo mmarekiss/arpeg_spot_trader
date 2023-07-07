@@ -5,7 +5,7 @@
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <LangVersion>latest</LangVersion>
-        <AssemblyVersion>1.17</AssemblyVersion>
+        <AssemblyVersion>1.18</AssemblyVersion>
         <UserSecretsId>f65822e3-5564-447a-91ad-0aa7d8fe7764</UserSecretsId>
     </PropertyGroup>
 

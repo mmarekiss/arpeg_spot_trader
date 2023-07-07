@@ -65,12 +65,12 @@ public class GoodWeFetcher : BackgroundService
         if (IPAddress.TryParse(goodWeConfig.Value.Ip, out var ipAddress))
         {
             (string SN, IConnection? connection) goodWee;
-            do
-            {
-                goodWee = await finder.GetGoodWe(ipAddress, stoppingToken);
-                if (goodWee.connection is null)
-                    goodWee = await finder.FindGoodWees(GetIpsFromHost()).FirstOrDefaultAsync(stoppingToken);
-            } while (goodWee.connection is null);
+            goodWee = await finder.GetGoodWe(ipAddress, stoppingToken);
+            if (goodWee.connection is null)
+                goodWee = await finder.FindGoodWees(GetIpsFromHost()).FirstOrDefaultAsync(stoppingToken);
+
+            if (goodWee.connection is null) 
+                throw new EntryPointNotFoundException();
 
             await RunTrader(goodWee.SN, goodWee.connection, stoppingToken);
         }
