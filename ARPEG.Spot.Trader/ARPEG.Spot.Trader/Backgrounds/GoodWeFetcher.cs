@@ -95,6 +95,15 @@ public class GoodWeFetcher : BackgroundService
 
     private void ExposeVersionToTraces(string sn)
     {
+        foreach (var labelValue in gauge.GetAllLabelValues())
+        {
+            gauge.RemoveLabelled(labelValue);
+        }
+        foreach (var labelValue in gaugeIp.GetAllLabelValues())
+        {
+            gaugeIp.RemoveLabelled(labelValue);
+        }
+        
         gauge.WithLabels(sn, "Major").Set(version.Major);
         gauge.WithLabels(sn, "Minor").Set(version.Minor);
 
