@@ -26,7 +26,9 @@ public class GoodWeFetcher : BackgroundService
     private readonly IOptions<GoodWe> goodWeConfig;
     private readonly IGoodWeInvStore invStore;
     private readonly ILogger<GoodWeFetcher> logger;
+    private readonly SearchFactory searchFactory;
     private readonly List<string> myIps = new();
+    private readonly List<IPAddress> broadcasts = new();
     private readonly IServiceProvider serviceProvider;
     private readonly Version version;
 
@@ -34,12 +36,14 @@ public class GoodWeFetcher : BackgroundService
         IOptions<GoodWe> goodWeConfig,
         IGoodWeInvStore invStore,
         ILogger<GoodWeFetcher> logger,
+        SearchFactory searchFactory,
         IServiceProvider serviceProvider)
     {
         this.finder = finder;
         this.goodWeConfig = goodWeConfig;
         this.invStore = invStore;
         this.logger = logger;
+        this.searchFactory = searchFactory;
         this.serviceProvider = serviceProvider;
         version = GetType().Assembly.GetName().Version ?? new Version(0, 0);
         this.logger.LogInformation("Start application with version [{Version}]", version);
@@ -51,7 +55,9 @@ public class GoodWeFetcher : BackgroundService
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         SshHelper.SetupTemporalLog(logger);
-        myIps.AddRange(SshHelper.ConnectWiFi(logger));
+        var addresses = SshHelper.ConnectWiFi(logger).ToList();
+        myIps.AddRange(addresses.Select(x=>x.unicast));
+        broadcasts.AddRange(addresses.Select(x=>x.broadcast));
         ExposeVersionToTraces($"STARTUP-{Guid.NewGuid()}");
 
         (string SN, IConnection? connection) goodWee = await finder.GetGoodWeRs485(stoppingToken);
@@ -68,7 +74,7 @@ public class GoodWeFetcher : BackgroundService
             (string SN, IConnection? connection) goodWee;
             goodWee = await finder.GetGoodWe(ipAddress, stoppingToken);
             if (goodWee.connection is null)
-                goodWee = await finder.FindGoodWees(GetIpsFromHost()).FirstOrDefaultAsync(stoppingToken);
+                goodWee = await FindInNetworks(stoppingToken);
 
             if (goodWee.connection is null) 
                 throw new EntryPointNotFoundException();
@@ -85,6 +91,21 @@ public class GoodWeFetcher : BackgroundService
                 await RunTrader(goodWee.SN, goodWee.connection, stoppingToken);
             }
         }
+    }
+
+    private async Task<(string SN, IConnection connection)> FindInNetworks(CancellationToken stoppingToken)
+    {
+        foreach (var broadcast in broadcasts)
+        {
+            var ipAddress = await searchFactory.TryFetchBroadcastAsync(broadcast, stoppingToken);
+            if (ipAddress is not null)
+            {
+                var (sn, connection) = await finder.GetGoodWe(ipAddress, stoppingToken);
+                if (connection is not null)
+                    return (sn, connection);
+            }
+        }
+        return await finder.FindGoodWees(GetIpsFromHost()).FirstOrDefaultAsync(stoppingToken);
     }
 
     private (IPAddress address, IPAddress mask)[] GetIpsFromHost()

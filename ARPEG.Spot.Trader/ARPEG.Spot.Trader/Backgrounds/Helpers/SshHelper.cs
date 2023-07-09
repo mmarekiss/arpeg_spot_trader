@@ -9,7 +9,7 @@ namespace ARPEG.Spot.Trader.Backgrounds.Helpers;
 
 public class SshHelper
 {
-    public static IEnumerable<string> ConnectWiFi(
+    public static IEnumerable<(string unicast, IPAddress broadcast)> ConnectWiFi(
         ILogger logger)
     {
         var client = GetClient();
@@ -36,17 +36,29 @@ public class SshHelper
         return client;
     }
 
-    private static IEnumerable<string> FetchAllMyIps(SshClient ssh,
+    private static IEnumerable<(string unicast, IPAddress broadcast)> FetchAllMyIps(SshClient ssh,
         ILogger logger)
     {
-        using var cmd = ssh.RunCommand(@$"ifconfig | grep -C1 -E 'eth0|p2p0' | grep 'inet '| sed -e 's/^ *inet \([0-9.]*\) .*$/\1/g'");
+        using var cmd = ssh.RunCommand(@$"ifconfig | grep -C1 -E 'eth0|p2p0' | grep 'inet '| sed -e 's/^ *inet \([0-9.]*\) .*broadcast \([0-9.]*\)$/\1,\2/g'");
         if (cmd.ExitStatus == 0)
         {
             logger.LogInformation("My IPs {ips}", cmd.Result);
-            return cmd.Result.Split('\n').Where(x => IPAddress.TryParse(x, out _));
+            return FetchUnicastAndMulticast(cmd);
         }
 
-        return Enumerable.Empty<string>();
+        return Enumerable.Empty<(string unicast, IPAddress broadcast)>();
+    }
+
+    private static IEnumerable<(string unicast, IPAddress broadcast)> FetchUnicastAndMulticast(SshCommand cmd)
+    {
+        foreach (var row in cmd.Result.Split('\n'))
+        {
+            var ips = row.Split(',');
+            if (ips.Length == 2
+                && IPAddress.TryParse(ips[0], out _)
+                && IPAddress.TryParse(ips[1], out var broadcast))
+                yield return (ips[0], broadcast);
+        }
     }
 
     private static void WifiConnection(SshClient ssh,

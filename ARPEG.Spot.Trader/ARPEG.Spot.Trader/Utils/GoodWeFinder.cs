@@ -56,7 +56,7 @@ public class GoodWeFinder
         return ("", null);
     }
 
-    public async Task<(string SN, IConnection?)> GetGoodWe(IPAddress address,
+    public async Task<(string SN, IConnection? connection)> GetGoodWe(IPAddress address,
         CancellationToken cancellationToken)
     {
         while (!cancellationToken.IsCancellationRequested)

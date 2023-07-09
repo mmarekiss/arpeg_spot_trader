@@ -3,6 +3,7 @@ using ARPEG.Spot.Trader.BitOutputs;
 using ARPEG.Spot.Trader.BitOutputs.Handlers;
 using ARPEG.Spot.Trader.Config;
 using ARPEG.Spot.Trader.Config.BitOutputs;
+using ARPEG.Spot.Trader.GoodWeCommunication.Connections;
 using ARPEG.Spot.Trader.Services;
 using ARPEG.Spot.Trader.Store;
 using ARPEG.Spot.Trader.Utils;
@@ -59,6 +60,7 @@ public static class AddServicesStartup
         services.AddTransient<GoodWeCom>();
         services.AddSingleton<PriceService>();
         services.AddSingleton<ForecastService>();
+        services.AddSingleton<SearchFactory>();
         services.AddSingleton<IGoodWeInvStore, GoodWeInvStore>();
         services.AddSingleton<IConfigUpdater, ConfigUpdater>();
 
