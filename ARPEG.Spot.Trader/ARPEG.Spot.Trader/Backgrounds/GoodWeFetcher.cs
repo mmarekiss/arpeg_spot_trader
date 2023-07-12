@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using System.Text.RegularExpressions;
 using ARPEG.Spot.Trader.Backgrounds.Helpers;
@@ -7,6 +6,7 @@ using ARPEG.Spot.Trader.Config;
 using ARPEG.Spot.Trader.GoodWeCommunication;
 using ARPEG.Spot.Trader.GoodWeCommunication.Connections;
 using ARPEG.Spot.Trader.Integration;
+using ARPEG.Spot.Trader.Services;
 using ARPEG.Spot.Trader.Store;
 using ARPEG.Spot.Trader.Utils;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,15 +20,16 @@ namespace ARPEG.Spot.Trader.Backgrounds;
 
 public class GoodWeFetcher : BackgroundService
 {
+    private readonly List<IPAddress> broadcasts = new();
+    private readonly IConfigUpdater configUpdater;
     private readonly GoodWeFinder finder;
     private readonly Gauge gauge;
     private readonly Gauge gaugeIp;
     private readonly IOptions<GoodWe> goodWeConfig;
     private readonly IGoodWeInvStore invStore;
     private readonly ILogger<GoodWeFetcher> logger;
-    private readonly SearchFactory searchFactory;
     private readonly List<string> myIps = new();
-    private readonly List<IPAddress> broadcasts = new();
+    private readonly SearchFactory searchFactory;
     private readonly IServiceProvider serviceProvider;
     private readonly Version version;
 
@@ -37,7 +38,8 @@ public class GoodWeFetcher : BackgroundService
         IGoodWeInvStore invStore,
         ILogger<GoodWeFetcher> logger,
         SearchFactory searchFactory,
-        IServiceProvider serviceProvider)
+        IServiceProvider serviceProvider,
+        IConfigUpdater configUpdater)
     {
         this.finder = finder;
         this.goodWeConfig = goodWeConfig;
@@ -45,6 +47,7 @@ public class GoodWeFetcher : BackgroundService
         this.logger = logger;
         this.searchFactory = searchFactory;
         this.serviceProvider = serviceProvider;
+        this.configUpdater = configUpdater;
         version = GetType().Assembly.GetName().Version ?? new Version(0, 0);
         this.logger.LogInformation("Start application with version [{Version}]", version);
         gauge = Metrics.CreateGauge("Version", "GoodWe traced value",
@@ -56,13 +59,13 @@ public class GoodWeFetcher : BackgroundService
     {
         SshHelper.SetupTemporalLog(logger);
         var addresses = SshHelper.ConnectWiFi(logger).ToList();
-        myIps.AddRange(addresses.Select(x=>x.unicast));
-        broadcasts.AddRange(addresses.Select(x=>x.broadcast));
+        myIps.AddRange(addresses.Select(x => x.unicast));
+        broadcasts.AddRange(addresses.Select(x => x.broadcast));
         ExposeVersionToTraces($"STARTUP-{Guid.NewGuid()}");
 
-        (string SN, IConnection? connection) goodWee = await finder.GetGoodWeRs485(stoppingToken);
-        if (goodWee.connection is not null)
-            await RunTrader(goodWee.SN, goodWee.connection, stoppingToken);
+        (var SN, var connection) = await finder.GetGoodWeRs485(stoppingToken);
+        if (connection is not null)
+            await RunTrader(SN, connection, stoppingToken);
         else
             await RunGoodWeAtUdp(stoppingToken);
     }
@@ -73,24 +76,31 @@ public class GoodWeFetcher : BackgroundService
         {
             (string SN, IConnection? connection) goodWee;
             goodWee = await finder.GetGoodWe(ipAddress, stoppingToken);
-            if (goodWee.connection is null)
-                goodWee = await FindInNetworks(stoppingToken);
+            if (goodWee.connection is null) goodWee = await CheckLastKnownIp(stoppingToken);
 
-            if (goodWee.connection is null) 
-                throw new EntryPointNotFoundException();
+            if (goodWee.connection is null) goodWee = await FindInNetworks(stoppingToken);
+
+            if (goodWee.connection is null) throw new EntryPointNotFoundException();
 
             await RunTrader(goodWee.SN, goodWee.connection, stoppingToken);
         }
         else
         {
             var addresses = IpFetcher.GetAddressess(logger).ToArray();
-            await foreach (var goodWee in finder.FindGoodWees(addresses)
+            await foreach ((var SN, var connection) in finder.FindGoodWees(addresses)
                                .WithCancellation(stoppingToken))
             {
-                logger.LogInformation("Found GoodWe at {Ip}", goodWee.connection);
-                await RunTrader(goodWee.SN, goodWee.connection, stoppingToken);
+                logger.LogInformation("Found GoodWe at {Ip}", connection);
+                await RunTrader(SN, connection, stoppingToken);
             }
         }
+    }
+
+    private async Task<(string SN, IConnection? connection)> CheckLastKnownIp(CancellationToken stoppingToken)
+    {
+        return IPAddress.TryParse(goodWeConfig.Value.LastKnownIp ?? "", out var ipAddress)
+            ? await finder.GetGoodWe(ipAddress, stoppingToken)
+            : ("", null);
     }
 
     private async Task<(string SN, IConnection connection)> FindInNetworks(CancellationToken stoppingToken)
@@ -100,11 +110,11 @@ public class GoodWeFetcher : BackgroundService
             var ipAddress = await searchFactory.TryFetchBroadcastAsync(broadcast, stoppingToken);
             if (ipAddress is not null)
             {
-                var (sn, connection) = await finder.GetGoodWe(ipAddress, stoppingToken);
-                if (connection is not null)
-                    return (sn, connection);
+                (var sn, var connection) = await finder.GetGoodWe(ipAddress, stoppingToken);
+                if (connection is not null) return (sn, connection);
             }
         }
+
         return await finder.FindGoodWees(GetIpsFromHost()).FirstOrDefaultAsync(stoppingToken);
     }
 
@@ -116,15 +126,9 @@ public class GoodWeFetcher : BackgroundService
 
     private void ExposeVersionToTraces(string sn)
     {
-        foreach (var labelValue in gauge.GetAllLabelValues())
-        {
-            gauge.RemoveLabelled(labelValue);
-        }
-        foreach (var labelValue in gaugeIp.GetAllLabelValues())
-        {
-            gaugeIp.RemoveLabelled(labelValue);
-        }
-        
+        foreach (var labelValue in gauge.GetAllLabelValues()) gauge.RemoveLabelled(labelValue);
+        foreach (var labelValue in gaugeIp.GetAllLabelValues()) gaugeIp.RemoveLabelled(labelValue);
+
         gauge.WithLabels(sn, "Major").Set(version.Major);
         gauge.WithLabels(sn, "Minor").Set(version.Minor);
 
@@ -139,6 +143,12 @@ public class GoodWeFetcher : BackgroundService
         IConnection connection,
         CancellationToken cancellationToken)
     {
+        if (connection is UdpConnection udpConnection)
+        {
+            var root = configUpdater.GetCurrent();
+            root.GoodWe.LastKnownIp = udpConnection.IpAddress.ToString();
+            await configUpdater.SaveCurrent(root, cancellationToken);
+        }
 
         SshHelper.SetupGwSnLog(sn, logger);
         ExposeVersionToTraces(sn);
@@ -148,7 +158,7 @@ public class GoodWeFetcher : BackgroundService
         {
             logger.LogWarning("Your licence for {name} is {lic}", sn, licence.LicenceVersion.ToString());
 
-            var definition = new Definition(sn, licence.LicenceVersion, connection);
+            Definition definition = new(sn, licence.LicenceVersion, connection);
             invStore.AddGoodWe(definition);
             var communicator = serviceProvider.GetService<GoodWeCom>() ??
                                throw new ApplicationException("please define goodWe comm");
@@ -164,7 +174,7 @@ public class GoodWeFetcher : BackgroundService
 
     private async Task<RunLicence?> FetchLicence(string name)
     {
-        var client = new HttpClient();
+        HttpClient client = new();
         return await client.GetFromJsonAsync<RunLicence>(
             $"https://arpeg-licences.azurewebsites.net/api/getLicence/{name}");
     }

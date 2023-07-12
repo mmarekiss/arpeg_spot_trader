@@ -3,4 +3,6 @@
 public class GoodWe
 {
     public string? Ip { get; init; }
+
+    public string? LastKnownIp { get; set; }
 }

@@ -13,7 +13,7 @@ public class UdpConnection : IConnection
         this.logger = logger;
     }
 
-    private IPAddress IpAddress { get; set; } = IPAddress.None;
+    public IPAddress IpAddress { get; private set; } = IPAddress.None;
 
     public async Task<byte[]> Send(byte[] message, CancellationToken cancellationToken)
     {

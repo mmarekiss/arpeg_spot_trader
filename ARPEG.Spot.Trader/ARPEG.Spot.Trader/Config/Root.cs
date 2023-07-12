@@ -4,6 +4,8 @@ namespace ARPEG.Spot.Trader.Config;
 
 public class Root
 {
+    public GoodWe GoodWe{ get; init; } = new GoodWe() { Ip = "10.10.100.253" };
+
     public PvForecast PvForecast { get; init; } = new();
 
     public ManualBatteryConfig ManualBatteryConfig { get; init; } = new ManualBatteryConfig();
