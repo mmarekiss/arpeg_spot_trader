@@ -96,7 +96,7 @@ public class SshHelper
         var output = shellStream.Expect(new Regex(@"([$#>:])"));
         logger.LogInformation("Connect To WiFi command {WiFiCommand}", output);
         shellStream.WriteLine(pass);
-        Thread.Sleep(TimeSpan.FromSeconds(10));
+        Thread.Sleep(TimeSpan.FromSeconds(30));
         output = shellStream.Expect(new Regex(@"[$>]"));
     }
     
