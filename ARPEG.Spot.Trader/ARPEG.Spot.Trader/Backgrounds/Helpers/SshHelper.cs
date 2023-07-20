@@ -16,6 +16,7 @@ public class SshHelper
 
         if (!WiFiIsConnected(client, logger))
         {
+            WifiConnectionRemove(client, "rock", logger);
             WifiConnection(client, "rock", logger);
         }
 
@@ -61,6 +62,25 @@ public class SshHelper
         }
     }
 
+    private static void WifiConnectionRemove(SshClient ssh,
+        string pass,
+        ILogger logger)
+    {
+        IDictionary<TerminalModes, uint> modes =
+            new Dictionary<TerminalModes, uint>();
+
+        modes.Add(TerminalModes.ECHO, 53);
+
+        using var shellStream = ssh.CreateShellStream("xterm", 80, 24, 800, 600, 1024, modes);
+        shellStream.WriteLine(
+            @"sudo nmcli connection | sed -e 's/^\(\S*\) .*$/\1/g' | grep Solar | xargs -I % sudo nmcli connection delete '%'");
+        var output = shellStream.Expect(new Regex(@"([$#>:])"));
+        logger.LogInformation("Connect delete WiFi command {WiFiCommand}", output);
+        shellStream.WriteLine(pass);
+        Thread.Sleep(TimeSpan.FromSeconds(10));
+        output = shellStream.Expect(new Regex(@"[$>]"));
+    }
+    
     private static void WifiConnection(SshClient ssh,
         string pass,
         ILogger logger)
