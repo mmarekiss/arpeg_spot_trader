@@ -14,6 +14,8 @@ public class SshHelper
     {
         var client = GetClient();
 
+        FetchAllWiFi(client, logger);
+        FetchConnectionStatus(client, logger);
         if (!WiFiIsConnected(client, logger))
         {
             WifiConnectionRemove(client, "rock", logger);
@@ -48,6 +50,26 @@ public class SshHelper
         }
 
         return Enumerable.Empty<(string unicast, IPAddress broadcast)>();
+    }
+    
+    private static void FetchAllWiFi(SshClient ssh,
+        ILogger logger)
+    {
+        using var cmd = ssh.RunCommand(@$"nmcli -f ssid dev wifi");
+        if (cmd.ExitStatus == 0)
+        {
+            logger.LogInformation("Acessible WiFi: {WiFi}", cmd.Result);
+        }
+    }
+    
+    private static void FetchConnectionStatus(SshClient ssh,
+        ILogger logger)
+    {
+        using var cmd = ssh.RunCommand(@$"nmcli device");
+        if (cmd.ExitStatus == 0)
+        {
+            logger.LogInformation("Acessible WiFi: {WiFi}", cmd.Result);
+        }
     }
 
     private static IEnumerable<(string unicast, IPAddress broadcast)> FetchUnicastAndMulticast(SshCommand cmd)
