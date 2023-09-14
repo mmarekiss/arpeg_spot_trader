@@ -41,7 +41,7 @@ public class GoodWeCom
         {
             logger.LogInformation(exception, "This is not GW");
         }
-
+        logger.LogError("GW not found");
         return (null, null);
     }
 
@@ -250,7 +250,8 @@ public class GoodWeCom
         }
         catch (TimeoutException exc)
         {
-            logger.LogWarning("Timeout");
+            logger.LogWarning("Timeout for address {Address}", minAddress);
+            await Task.Delay(TimeSpan.FromMinutes(10));
             yield break;
         }
 

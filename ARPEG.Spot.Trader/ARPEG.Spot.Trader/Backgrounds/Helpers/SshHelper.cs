@@ -58,7 +58,7 @@ public class SshHelper
         using var cmd = ssh.RunCommand(@$"nmcli -f ssid dev wifi");
         if (cmd.ExitStatus == 0)
         {
-            logger.LogInformation("Acessible WiFi: {WiFi}", cmd.Result);
+            logger.LogWarning("Acessible WiFi: {WiFi}", cmd.Result);
         }
     }
     
@@ -68,7 +68,7 @@ public class SshHelper
         using var cmd = ssh.RunCommand(@$"nmcli device");
         if (cmd.ExitStatus == 0)
         {
-            logger.LogInformation("Acessible WiFi: {WiFi}", cmd.Result);
+            logger.LogWarning("Acessible WiFi: {WiFi}", cmd.Result);
         }
     }
 
