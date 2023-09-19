@@ -33,7 +33,8 @@ public class GoodWeFetcher : BackgroundService
     private readonly IServiceProvider serviceProvider;
     private readonly Version version;
 
-    public GoodWeFetcher(GoodWeFinder finder,
+    public GoodWeFetcher(
+        GoodWeFinder finder,
         IOptions<GoodWe> goodWeConfig,
         IGoodWeInvStore invStore,
         ILogger<GoodWeFetcher> logger,
@@ -57,17 +58,26 @@ public class GoodWeFetcher : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        SshHelper.SetupTemporalLog(logger);
-        var addresses = SshHelper.ConnectWiFi(logger).ToList();
-        myIps.AddRange(addresses.Select(x => x.unicast));
-        broadcasts.AddRange(addresses.Select(x => x.broadcast));
-        ExposeVersionToTraces($"STARTUP-{Guid.NewGuid()}");
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            SshHelper.SetupTemporalLog(logger);
+            var addresses = SshHelper.ConnectWiFi(logger).ToList();
+            myIps.AddRange(addresses.Select(x => x.unicast));
+            broadcasts.AddRange(addresses.Select(x => x.broadcast));
+            ExposeVersionToTraces($"STARTUP-{Guid.NewGuid()}");
 
-        (var SN, var connection) = await finder.GetGoodWeRs485(stoppingToken);
-        if (connection is not null)
-            await RunTrader(SN, connection, stoppingToken);
-        else
-            await RunGoodWeAtUdp(stoppingToken);
+            (var SN, var connection) = await finder.GetGoodWeRs485(stoppingToken);
+            if (connection is not null)
+                await RunTrader(SN, connection, stoppingToken);
+            else
+                await RunGoodWeAtUdp(stoppingToken);
+
+            if (!stoppingToken.IsCancellationRequested)
+            {
+                logger.LogError("Good We didn't found, next try after 30minutes");
+                await Task.Delay(TimeSpan.FromMinutes(30), stoppingToken);
+            }
+        }
     }
 
     private async Task RunGoodWeAtUdp(CancellationToken stoppingToken)
@@ -139,7 +149,8 @@ public class GoodWeFetcher : BackgroundService
         }
     }
 
-    private async Task RunTrader(string sn,
+    private async Task RunTrader(
+        string sn,
         IConnection connection,
         CancellationToken cancellationToken)
     {
