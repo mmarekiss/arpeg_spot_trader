@@ -5,11 +5,11 @@ VisualStudioVersion = 17.5.33414.496
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ARPEG.Spot.Trader", "ARPEG.Spot.Trader\ARPEG.Spot.Trader.csproj", "{6E64EA63-6384-497A-AD06-A4E4B1E346B8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ARPEG.Sport.Licence.Server", "ARPEG.Sport.Licence.Server\ARPEG.Sport.Licence.Server.csproj", "{B4F692C8-F0CC-47FC-9E32-0D09BD04EF54}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ARPEG.Sport.Licence.Server", "ARPEG.Sport.Licence.Server\ARPEG.Sport.Licence.Server.csproj", "{B4F692C8-F0CC-47FC-9E32-0D09BD04EF54}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ARPEG.Spot.Trader.Integration", "ARPEG.Spot.Trader.Integration\ARPEG.Spot.Trader.Integration.csproj", "{3A953AA5-85E6-49CC-AA88-F019D93058A0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ARPEG.Spot.Trader.Integration", "ARPEG.Spot.Trader.Integration\ARPEG.Spot.Trader.Integration.csproj", "{3A953AA5-85E6-49CC-AA88-F019D93058A0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ARPEG.Spot.Trader.UI", "ARPEG.Spot.Trader.UI\ARPEG.Spot.Trader.UI.csproj", "{0437CAD7-32A0-465B-B558-A12ED72A9E40}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ARPEG.Spot.Trader.UI", "ARPEG.Spot.Trader.UI\ARPEG.Spot.Trader.UI.csproj", "{0437CAD7-32A0-465B-B558-A12ED72A9E40}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
