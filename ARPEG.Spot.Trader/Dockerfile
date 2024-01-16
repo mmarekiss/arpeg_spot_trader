@@ -1,10 +1,10 @@
-FROM --platform=$TARGETPLATFORM  mcr.microsoft.com/dotnet/aspnet:8.0-jammy AS base
+FROM mcr.microsoft.com/dotnet/aspnet:8.0-jammy AS base
 USER app
 WORKDIR /app
 EXPOSE 9876
 EXPOSE 12345
 
-FROM --platform=$TARGETPLATFORM  mcr.microsoft.com/dotnet/sdk:8.0-jammy AS build
+FROM mcr.microsoft.com/dotnet/sdk:8.0-jammy AS build
 WORKDIR /src
 
 # copy everything else and build app
