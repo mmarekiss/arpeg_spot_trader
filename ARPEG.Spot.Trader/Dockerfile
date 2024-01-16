@@ -7,7 +7,7 @@ COPY ./ARPEG.Spot.Trader/ /source/ARPEG.Spot.Trader/
 COPY ./ARPEG.Spot.Trader.Integration/ /source/ARPEG.Spot.Trader.Integration/ 
 COPY ./ARPEG.Spot.Trader.UI/ /source/ARPEG.Spot.Trader.UI/
 
-RUN dotnet publish  /source/ARPEG.Spot.Trader.UI -c release --no-restore -o /app
+RUN dotnet publish  /source/ARPEG.Spot.Trader.UI -c release -o /app
 
 # final stage/image
 FROM mcr.microsoft.com/dotnet/aspnet:8.0-jammy
