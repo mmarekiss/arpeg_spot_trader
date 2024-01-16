@@ -15,7 +15,7 @@ COPY ./ARPEG.Spot.Trader.UI/ ARPEG.Spot.Trader.UI/
 COPY ["ARPEG.Spot.Trader/ARPEG.Spot.Trader.csproj", "TARPEG.Spot.Trader/"]
 COPY ["ARPEG.Spot.Trader.Integration/ARPEG.Spot.Trader.Integration.csproj", "ARPEG.Spot.Trader.Integration/"]
 COPY ["ARPEG.Spot.Trader.UI/ARPEG.Spot.Trader.UI.csproj", "ARPEG.Spot.Trader.UI/"]
-RUN dotnet restore -a $TARGETARCH "ARPEG.Spot.Trader.UI/ARPEG.Spot.Trader.UI.csproj"
+RUN dotnet restore "ARPEG.Spot.Trader.UI/ARPEG.Spot.Trader.UI.csproj"
 COPY . .
 WORKDIR "/src/ARPEG.Spot.Trader.UI"
 RUN dotnet build -a $TARGETARCH "ARPEG.Spot.Trader.UI.csproj" --runtime linux-arm64 -c Release -o /app/build
