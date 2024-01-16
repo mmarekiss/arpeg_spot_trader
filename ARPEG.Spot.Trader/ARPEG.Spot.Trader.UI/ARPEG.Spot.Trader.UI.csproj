@@ -10,6 +10,5 @@
     </ItemGroup>
 	<ItemGroup>
 		<ContainerEnvironmentVariable Include="APP_UID" Value="root" />
-		<ContainerUser>root</ContainerUser>
 	</ItemGroup>
 </Project>
