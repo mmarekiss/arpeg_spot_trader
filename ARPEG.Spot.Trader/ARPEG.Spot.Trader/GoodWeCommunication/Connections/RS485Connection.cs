@@ -42,7 +42,7 @@ public class RS485Connection : IConnection
         }
         else
         {
-            logger.LogInformation("Timeout: IsCompleted=>{completed}", response.Length > 0);
+            logger.LogInformation("Timeout:no data received");
             throw new TimeoutException();
         }
     }
