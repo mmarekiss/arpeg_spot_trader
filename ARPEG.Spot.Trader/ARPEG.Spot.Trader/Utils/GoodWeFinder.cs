@@ -13,7 +13,6 @@ public class GoodWeFinder
     private readonly ILogger<GoodWeFinder> logger;
     private readonly IServiceProvider serviceProvider;
 
-
     public GoodWeFinder(GoodWeCom goodWe,
         ILogger<GoodWeFinder> logger,
         IServiceProvider serviceProvider)
@@ -43,10 +42,16 @@ public class GoodWeFinder
         logger.LogInformation("Try check address RS485");
         try
         {
-            var (sn, connection) = await goodWe.GetInverterName(rs485Connection);
-            if (!string.IsNullOrWhiteSpace(sn))
-                return (sn, connection);
-            logger.LogError("Cannot connect to Inverter at address RS485");
+            for (var i = 0; i < 10; i++)
+            {
+                logger.LogError("try connect to Inverter at address RS485, attempt [{i}]", i);
+
+                var (sn, connection) = await goodWe.GetInverterName(rs485Connection);
+                if (!string.IsNullOrWhiteSpace(sn))
+                    return (sn, connection);
+                logger.LogError("Cannot connect to Inverter at address RS485");
+                await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken);
+            }
         }
         catch (Exception exc)
         {
@@ -125,7 +130,6 @@ public class GoodWeFinder
                 yield break;
             }
             result.Clear();
-            
         }
     }
 
@@ -136,13 +140,12 @@ public class GoodWeFinder
 
         var baseIp = new[] { ip[0] & mask[0], ip[1] & mask[1], ip[2] & mask[2], ip[3] & mask[3] };
 
-
         for (short i0 = 0; i0 <= 255 && CheckMask(0, i0, ip, mask); i0++)
-        for (short i1 = 0; i1 <= 255 && CheckMask(1, i1, ip, mask); i1++)
-        for (short i2 = 0; i2 <= 255 && CheckMask(2, i2, ip, mask); i2++)
-        for (short i3 = 0; i3 <= 255 && CheckMask(3, i3, ip, mask); i3++)
-            yield return new IPAddress(new[]
-                { (byte)(baseIp[0] + i0), (byte)(baseIp[1] + i1), (byte)(baseIp[2] + i2), (byte)(baseIp[3] + i3) });
+            for (short i1 = 0; i1 <= 255 && CheckMask(1, i1, ip, mask); i1++)
+                for (short i2 = 0; i2 <= 255 && CheckMask(2, i2, ip, mask); i2++)
+                    for (short i3 = 0; i3 <= 255 && CheckMask(3, i3, ip, mask); i3++)
+                        yield return new IPAddress(new[]
+                            { (byte)(baseIp[0] + i0), (byte)(baseIp[1] + i1), (byte)(baseIp[2] + i2), (byte)(baseIp[3] + i3) });
     }
 
     private bool CheckMask(
