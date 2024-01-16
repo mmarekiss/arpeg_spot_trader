@@ -18,7 +18,7 @@ COPY ["ARPEG.Spot.Trader.UI/ARPEG.Spot.Trader.UI.csproj", "ARPEG.Spot.Trader.UI/
 RUN dotnet restore "ARPEG.Spot.Trader.UI/ARPEG.Spot.Trader.UI.csproj"
 COPY . .
 WORKDIR "/src/ARPEG.Spot.Trader.UI"
-RUN dotnet build "ARPEG.Spot.Trader.UI.csproj" -c Release -o /app/build
+RUN dotnet build "ARPEG.Spot.Trader.UI.csproj" --runtime linux-arm64 -c Release -o /app/build
 
 FROM build AS publish
 RUN dotnet publish  -c Release -o /app/publish
