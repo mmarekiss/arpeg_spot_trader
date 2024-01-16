@@ -20,7 +20,7 @@ jobs:
       with:        
         version: latest     
     - name: set env
-      run: echo "tagversion=$(date +'%Y.%m.%d')" >> $GITHUB_ENV
+      run: echo "tagversion=$(date +'%Y.%m.%d-%H-%M')" >> $GITHUB_ENV
     - name: Prepare      
       if: success()      
       id: prepare      
