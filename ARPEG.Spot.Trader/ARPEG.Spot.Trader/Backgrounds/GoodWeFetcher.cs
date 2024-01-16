@@ -86,11 +86,14 @@ public class GoodWeFetcher : BackgroundService
         {
             (string SN, IConnection? connection) goodWee;
             goodWee = await finder.GetGoodWe(ipAddress, stoppingToken);
-            if (goodWee.connection is null) goodWee = await CheckLastKnownIp(stoppingToken);
+            if (goodWee.connection is null)
+                goodWee = await CheckLastKnownIp(stoppingToken);
 
-            if (goodWee.connection is null) goodWee = await FindInNetworks(stoppingToken);
+            if (goodWee.connection is null)
+                goodWee = await FindInNetworks(stoppingToken);
 
-            if (goodWee.connection is null) throw new EntryPointNotFoundException();
+            if (goodWee.connection is null)
+                throw new EntryPointNotFoundException();
 
             await RunTrader(goodWee.SN, goodWee.connection, stoppingToken);
         }
@@ -121,7 +124,8 @@ public class GoodWeFetcher : BackgroundService
             if (ipAddress is not null)
             {
                 (var sn, var connection) = await finder.GetGoodWe(ipAddress, stoppingToken);
-                if (connection is not null) return (sn, connection);
+                if (connection is not null)
+                    return (sn, connection);
             }
         }
 
@@ -136,8 +140,10 @@ public class GoodWeFetcher : BackgroundService
 
     private void ExposeVersionToTraces(string sn)
     {
-        foreach (var labelValue in gauge.GetAllLabelValues()) gauge.RemoveLabelled(labelValue);
-        foreach (var labelValue in gaugeIp.GetAllLabelValues()) gaugeIp.RemoveLabelled(labelValue);
+        foreach (var labelValue in gauge.GetAllLabelValues())
+            gauge.RemoveLabelled(labelValue);
+        foreach (var labelValue in gaugeIp.GetAllLabelValues())
+            gaugeIp.RemoveLabelled(labelValue);
 
         gauge.WithLabels(sn, "Major").Set(version.Major);
         gauge.WithLabels(sn, "Minor").Set(version.Minor);
@@ -145,7 +151,8 @@ public class GoodWeFetcher : BackgroundService
         foreach (var adr in myIps)
         {
             var match = Regex.IsMatch(adr, "\\d+\\.\\d+\\.\\d+\\.\\d+");
-            if (match) gaugeIp.WithLabels(sn, adr).Set(1);
+            if (match)
+                gaugeIp.WithLabels(sn, adr).Set(1);
         }
     }
 
@@ -161,7 +168,6 @@ public class GoodWeFetcher : BackgroundService
             await configUpdater.SaveCurrent(root, cancellationToken);
         }
 
-        SshHelper.SetupGwSnLog(sn, logger);
         ExposeVersionToTraces(sn);
         var licence = await FetchLicence(sn);
 
