@@ -139,14 +139,4 @@ public class SshHelper
             return false;
         }
     }
-
-    public static void SetupTemporalLog(ILogger logger)
-    {
-        using var client = GetClient();
-        using var cmd = client.RunCommand($"sed -i 's/tradersn: arpeg-1/tradersn: arpeg-{Guid.NewGuid()}/g' promtailconfig.yml");
-        if (cmd.ExitStatus == 0)
-            logger.LogInformation(cmd.Result);
-        else
-            logger.LogError(cmd.Error);
-    }
 }

@@ -58,6 +58,8 @@ public class RS485Connection : IConnection
             logger.LogInformation("Try to connect via COM {com}", portName);
             SerialPort = new SerialPort(portName, 9600, Parity.None, 8, StopBits.One);
             SerialPort.Open();
+
+            logger.LogInformation("Connected to COM {com}", portName);
         }
         return SerialPort;
     }

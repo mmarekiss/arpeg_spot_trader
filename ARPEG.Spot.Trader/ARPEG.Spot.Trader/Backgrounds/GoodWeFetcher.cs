@@ -60,7 +60,6 @@ public class GoodWeFetcher : BackgroundService
     {
         while (!stoppingToken.IsCancellationRequested)
         {
-            SshHelper.SetupTemporalLog(logger);
             var addresses = SshHelper.ConnectWiFi(logger).ToList();
             myIps.AddRange(addresses.Select(x => x.unicast));
             broadcasts.AddRange(addresses.Select(x => x.broadcast));
