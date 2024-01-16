@@ -6,7 +6,7 @@ var builder = new HostBuilder()
     .ConfigureFunctionsWorkerDefaults()
     .ConfigureServices(s =>
     {
-        s.AddTransient<TableStorageReader>();
+        s.AddTransient<TableStorage>();
     });
 
 var host = builder.Build();

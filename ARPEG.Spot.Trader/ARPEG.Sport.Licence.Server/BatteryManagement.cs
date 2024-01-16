@@ -8,10 +8,10 @@ namespace ARPEG.Sport.Licence.Server;
 
 public class BatteryManagementFunction
 {
-    private readonly TableStorageReader tableStorageReader;
+    private readonly TableStorage tableStorageReader;
     private readonly ILogger logger;
 
-    public BatteryManagementFunction(TableStorageReader tableStorageReader,
+    public BatteryManagementFunction(TableStorage tableStorageReader,
         ILogger<BatteryManagementFunction> logger)
     {
         this.tableStorageReader = tableStorageReader;

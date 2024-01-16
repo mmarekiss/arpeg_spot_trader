@@ -9,10 +9,10 @@ namespace ARPEG.Sport.Licence.Server;
 public class CheckLicenceFunction
 {
     private readonly ILogger logger;
-    private readonly TableStorageReader tableStorageReader;
+    private readonly TableStorage tableStorageReader;
 
     public CheckLicenceFunction(ILoggerFactory loggerFactory,
-        TableStorageReader tableStorageReader)
+        TableStorage tableStorageReader)
     {
         logger = loggerFactory.CreateLogger<CheckLicenceFunction>();
         this.tableStorageReader = tableStorageReader;

@@ -29,10 +29,11 @@ public class SshHelper
     {
         var login = "rock";
         var password = "rock";
-        
+
         var serverAddress = "172.17.0.1";
 
-        if (Debugger.IsAttached) serverAddress = "192.168.55.140";
+        if (Debugger.IsAttached)
+            serverAddress = "192.168.55.140";
 
         var client = new SshClient(serverAddress, 22, login, password);
         client.Connect();
@@ -51,7 +52,7 @@ public class SshHelper
 
         return Enumerable.Empty<(string unicast, IPAddress broadcast)>();
     }
-    
+
     private static void FetchAllWiFi(SshClient ssh,
         ILogger logger)
     {
@@ -61,7 +62,7 @@ public class SshHelper
             logger.LogWarning("Acessible WiFi: {WiFi}", cmd.Result);
         }
     }
-    
+
     private static void FetchConnectionStatus(SshClient ssh,
         ILogger logger)
     {
@@ -102,7 +103,7 @@ public class SshHelper
         Thread.Sleep(TimeSpan.FromSeconds(10));
         output = shellStream.Expect(new Regex(@"[$>]"));
     }
-    
+
     private static void WifiConnection(SshClient ssh,
         string pass,
         ILogger logger)
@@ -121,7 +122,7 @@ public class SshHelper
         Thread.Sleep(TimeSpan.FromSeconds(30));
         output = shellStream.Expect(new Regex(@"[$>]"));
     }
-    
+
     private static bool WiFiIsConnected(SshClient ssh,
         ILogger logger)
     {
@@ -139,17 +140,6 @@ public class SshHelper
         }
     }
 
-    public static void SetupGwSnLog(string sn, ILogger logger)
-    {
-        using var client = GetClient();
-        sn = sn.Replace(" ", "");
-        using var cmd = client.RunCommand($"sed -i 's/tradersn: .*$/tradersn: {sn}/g' promtailconfig.yml");
-        if (cmd.ExitStatus == 0)
-            logger.LogInformation(cmd.Result);
-        else
-            logger.LogError(cmd.Error);
-    }
-    
     public static void SetupTemporalLog(ILogger logger)
     {
         using var client = GetClient();
