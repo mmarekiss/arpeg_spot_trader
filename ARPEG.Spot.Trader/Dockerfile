@@ -1,9 +1,9 @@
-FROM mcr.microsoft.com/dotnet/aspnet:8.0-jammy AS base
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/aspnet:8.0-jammy AS base
 WORKDIR /app
 EXPOSE 9876
 EXPOSE 12345
 
-FROM mcr.microsoft.com/dotnet/sdk:8.0-jammy AS build
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0-jammy AS build
 WORKDIR /src
 
 # copy everything else and build app
@@ -19,7 +19,7 @@ COPY . .
 WORKDIR "/src/ARPEG.Spot.Trader.UI"
 RUN dotnet build "ARPEG.Spot.Trader.UI.csproj" -c Release -o /app/build
 
-FROM build AS publish
+FROM --platform=$BUILDPLATFORM build AS publish
 RUN dotnet publish -c Release -o /app/publish
 
 # final stage/image
