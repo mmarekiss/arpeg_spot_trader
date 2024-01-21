@@ -48,7 +48,10 @@ public class GoodWeFinder
 
                 var (sn, connection) = await goodWe.GetInverterName(rs485Connection);
                 if (!string.IsNullOrWhiteSpace(sn))
+                {
+                    logger.LogInformation("Inverter found at address RS485 {sn}", sn);
                     return (sn, connection);
+                }
                 logger.LogError("Cannot connect to Inverter at address RS485");
                 await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken);
             }
