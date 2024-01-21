@@ -6,7 +6,6 @@ namespace ARPEG.Spot.Trader.Services;
 
 public class PriceService
 {
-
     private static JsonSerializerOptions _jsonSerializerOptions = new JsonSerializerOptions();
     private readonly ILogger<PriceService> _logger;
 
@@ -27,7 +26,7 @@ public class PriceService
         var hour = DateTime.Now.Hour;
         if (hour < 8)
         {
-            return _todayPrices.Take(8).Select((v, i) => new { v, i }).OrderBy(o => o.v).Select(v=>v.i).First() == hour;
+            return _todayPrices.Take(8).Select((v, i) => new { v, i }).OrderBy(o => o.v).Select(v => v.i).First() == hour;
         }
 
         if (hour > 18)
@@ -35,12 +34,11 @@ public class PriceService
             return _todayPrices.Skip(18).Select((v, i) => new { v, i })
                 .Concat(_tommorowPrices.Take(8).Select((v, i) => new { v, i }))
                 .OrderBy(o => o.v)
-                .Select(x=>x.i).First() == hour;
+                .Select(x => x.i).First() == hour;
         }
 
         return false;
     }
-    
 
     public double GetCurrentPrice()
     {
@@ -48,7 +46,6 @@ public class PriceService
         _logger.LogInformation("Price for today at hour {i} is {p}", hour, _todayPrices[hour]);
         return _todayPrices[hour];
     }
-
 
     public async Task FetchPrices(CancellationToken cancellationToken)
     {
@@ -90,7 +87,7 @@ public class PriceService
             for (var i = 0; priceArray?.point?.Length > 1 && i < 24; i++)
             {
                 prices[i] = priceArray.point[i].y;
-                _logger.LogInformation("Price for day {d} at hour {i} is {p}", utcDate, i, prices[i]);
+                _logger.LogDebug("Price for day {d} at hour {i} is {p}", utcDate, i, prices[i]);
                 fetched = true;
             }
         }

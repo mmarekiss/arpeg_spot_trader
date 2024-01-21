@@ -26,7 +26,7 @@ jobs:
       id: prepare      
       run: |        
         echo "docker_platform=linux/arm64" >> $GITHUB_ENV 
-    - name: Build the Docker image
-      run: |
-        cd ARPEG.Spot.Trader
-        docker buildx build . --file Dockerfile --platform linux/arm64 --tag marekiss/arpeg_trader:${{ env.tagversion }} --tag marekiss/arpeg_trader:latest --output type=image --push
+    # - name: Build the Docker image
+    #   run: |
+    #     cd ARPEG.Spot.Trader
+    #     docker buildx build . --file Dockerfile --platform linux/arm64 --tag marekiss/arpeg_trader:${{ env.tagversion }} --tag marekiss/arpeg_trader:latest --output type=image --push
