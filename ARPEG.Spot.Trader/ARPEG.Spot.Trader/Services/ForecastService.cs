@@ -23,13 +23,13 @@ public class ForecastService
 
     public int GetCurrentForecast()
     {
-        _logger.LogInformation("Current date time is {dt}", DateTime.Now);
+        _logger.LogTrace("Current date time is {dt}", DateTime.Now);
         return _forecastForToday[DateTime.Now.Hour];
     }
 
     public int GetForecast24()
     {
-        _logger.LogInformation("Current date time is {dt}", DateTime.Now);
+        _logger.LogTrace("Current date time is {dt}", DateTime.Now);
         var hour = DateTime.Now.Hour;
         return _forecastForTommorow.Take(hour + 1).Sum()
                + _forecastForToday.Skip(hour + 1).Sum();
@@ -39,7 +39,6 @@ public class ForecastService
     {
         return _forecastForToday.Max();
     }
-
 
     public async Task GetForecast(CancellationToken cancellationToken)
     {

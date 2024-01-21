@@ -37,7 +37,7 @@
                         "imagePullPolicy": "on-create",
                         "restartPolicy": "always",
                         "settings": {
-                            "image": "marekiss/arpeg_trader:2023.09.19",
+                            "image": "marekiss/arpeg_trader:2024.01.16",
                             "createOptions": "{\"HostConfig\":{\"Privileged\":true,\"Binds\":[\"/home/rock/user:/app/user\"],\"PortBindings\":{\"9876/tcp\":[{\"HostPort\":\"80\"}],\"12345/tcp\":[{\"HostPort\":\"12345\"}]}}}"
                         },
                         "status": "running",

@@ -54,7 +54,7 @@ public class RS485Connection : IConnection
             SerialPort?.Dispose();
             var portName = "/dev/ttyUSB0";
             if (Debugger.IsAttached)
-                portName = "COM3";
+                portName = "COM6";
             logger.LogInformation("Try to connect via COM {com}", portName);
             SerialPort = new SerialPort(portName, 9600, Parity.None, 8, StopBits.One);
             SerialPort.Open();
