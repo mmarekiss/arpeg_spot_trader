@@ -206,7 +206,7 @@ public class GoodWeCom
             gauges.Add(group, gauge = Metrics.CreateGauge(group.Replace(" ", "_"), "GoodWe traced value",
                 new GaugeConfiguration
                 {
-                    LabelNames = new[] { "part", "sn", "device-id" }
+                    LabelNames = new[] { "part", "sn", "iot_device_id" }
                 }));
 
         gauge?.WithLabels(part, definition.Sn, deviceId).Set(value);

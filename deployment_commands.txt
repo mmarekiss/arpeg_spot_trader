@@ -1,0 +1,91 @@
+{
+    "modulesContent": {
+        "$edgeAgent": {
+            "properties.desired": {
+                "schemaVersion": "1.1",
+                "runtime": {
+                    "type": "docker",
+                    "settings": {
+                        "registryCredentials": {
+                            "git-artin": {
+                                "address": "git.artin.cz:5050",
+                                "password": "zvyrJmrCxfyUpM-sm9qg",
+                                "username": "read_only_user"
+                            }
+                        }
+                    }
+                },
+                "systemModules": {
+                    "edgeAgent": {
+                        "settings": {
+                            "image": "mcr.microsoft.com/azureiotedge-agent:1.4"
+                        },
+                        "type": "docker"
+                    },
+                    "edgeHub": {
+                        "restartPolicy": "always",
+                        "settings": {
+                            "image": "mcr.microsoft.com/azureiotedge-hub:1.4",
+                            "createOptions": "{\"HostConfig\":{\"PortBindings\":{\"443/tcp\":[{\"HostPort\":\"443\"}],\"5671/tcp\":[{\"HostPort\":\"5671\"}],\"8883/tcp\":[{\"HostPort\":\"8883\"}]}}}"
+                        },
+                        "status": "running",
+                        "type": "docker"
+                    }
+                },
+                "modules": {
+                    "Trader": {
+                        "imagePullPolicy": "on-create",
+                        "restartPolicy": "always",
+                        "settings": {
+                            "image": "marekiss/arpeg_trader:2024.01.16",
+                            "createOptions": "{\"HostConfig\":{\"Privileged\":true,\"Binds\":[\"/home/rock/user:/app/user\"],\"PortBindings\":{\"9876/tcp\":[{\"HostPort\":\"80\"}],\"12345/tcp\":[{\"HostPort\":\"12345\"}]}}}"
+                        },
+                        "status": "running",
+                        "type": "docker"
+                    },
+                    "Prometheus":{
+                        "imagePullPolicy": "on-create",
+                        "restartPolicy": "always",
+                        "settings": {
+                            "image": "prom/prometheus",
+                            "createOptions": "{\"Cmd\": [\"--config.file=/etc/prometheus/prometheus.yml\"],\"HostConfig\":{\"Privileged\":true,\"Binds\":[\"/home/rock/prometheus.yml:/etc/prometheus/prometheus.yml\"],\"PortBindings\":{\"9090/tcp\":[{\"HostPort\":\"9090\"}]}}}"
+                        },
+                        "status": "running",
+                        "type": "docker"
+                    },
+                    "IoTEdgeMetricsCollector": {
+                        "env": {
+                            "ResourceId": {
+                                "value": "/subscriptions/92478ac5-e2e0-4066-afcb-be0b98c4e205/resourceGroups/penguin-container-v2/providers/Microsoft.Devices/IotHubs/penguin-container-v2"
+                            },
+                            "LogAnalyticsWorkspaceId": {
+                                "value": "a0c8bdcd-9806-401d-8fdc-aaff663ca2b4"
+                            },
+                            "LogAnalyticsSharedKey": {
+                                "value": "jPIhcgTfaI1WbSbDobKpG/fOJQud5NKwcSp37zr+0quhKDP0w6OlN52v8bkNG3lYsJv62hIcgL0MaESCJgBxLw=="
+                            },
+                            "MetricsEndpointsCSV": {
+                                "value": "http://edgeAgent:9600/metrics, http://edgeHub:9600/metrics, http://PenguinContainer:12345/metrics"
+                            }
+                        },
+                        "restartPolicy": "always",
+                        "settings": {
+                            "image": "mcr.microsoft.com/azureiotedge-metrics-collector:1.1"
+                        },
+                        "status": "running",
+                        "type": "docker"
+                    }
+                }
+            }
+        },
+        "$edgeHub": {
+            "properties.desired": {
+                "schemaVersion": "1.1",
+                "storeAndForwardConfiguration": {
+                    "timeToLiveSecs": 7200
+                },
+                "routes": {}
+            }
+        }
+    }
+}
