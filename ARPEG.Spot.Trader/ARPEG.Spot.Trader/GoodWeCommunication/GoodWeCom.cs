@@ -13,6 +13,7 @@ public class GoodWeCom
     private readonly IEnumerable<IBitController> bitControllers;
     private readonly Dictionary<string, Gauge> gauges = new();
     private readonly ILogger<GoodWeCom> logger;
+    private readonly string deviceId = Environment.GetEnvironmentVariable("IOTEDGE_DEVICEID") ?? "not-iot-device";
 
     public GoodWeCom(ILogger<GoodWeCom> logger,
         IEnumerable<IBitController> bitControllers)
@@ -136,7 +137,6 @@ public class GoodWeCom
             new DataPoint(DataGroupNames.Battery, "bmsSOH", 37008)
         ).ToListAsync(cancellationToken);
 
-
         await GetInt16Values(
             definition,
             new DataPoint("Backup V", "L1", 35145),
@@ -206,10 +206,10 @@ public class GoodWeCom
             gauges.Add(group, gauge = Metrics.CreateGauge(group.Replace(" ", "_"), "GoodWe traced value",
                 new GaugeConfiguration
                 {
-                    LabelNames = new[] { "part", "sn" }
+                    LabelNames = new[] { "part", "sn", "device-id" }
                 }));
 
-        gauge?.WithLabels(part, definition.Sn).Set(value);
+        gauge?.WithLabels(part, definition.Sn, deviceId).Set(value);
     }
 
     private async Task SetUint16Value(ushort address,
@@ -254,7 +254,6 @@ public class GoodWeCom
             await Task.Delay(TimeSpan.FromMinutes(10));
             yield break;
         }
-
 
         if (response.Length > 0)
             foreach (var point in points)
